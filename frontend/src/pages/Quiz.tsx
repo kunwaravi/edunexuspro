@@ -6,6 +6,7 @@ import { useQuiz } from '../hooks/useQuiz';
 import { Send, ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { prefersReducedMotion } from '../lib/motion';
 import QuizHeader from '../components/organisms/QuizHeader';
 import QuizQuestion from '../components/molecules/QuizQuestion';
 import ExamResultsModal from '../components/molecules/ExamResultsModal';
@@ -32,8 +33,10 @@ const Quiz = () => {
   const [results, setResults] = useState<any>(null);
 
   // Celebrate success when passing the assessment!
+  // Skipped entirely under prefers-reduced-motion — the pass/fail result is
+  // already conveyed by the results UI, so the burst is decoration only.
   useEffect(() => {
-    if (results?.passed) {
+    if (results?.passed && !prefersReducedMotion()) {
       confetti({
         particleCount: 140,
         spread: 80,

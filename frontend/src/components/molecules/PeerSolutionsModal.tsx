@@ -80,7 +80,7 @@ const PeerSolutionsModal: React.FC<PeerSolutionsModalProps> = ({
                   </div>
                   <div>
                     <h3 className="text-sm font-extrabold text-white">{title}</h3>
-                    {subtitle && <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{subtitle}</p>}
+                    {subtitle && <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">{subtitle}</p>}
                   </div>
                 </div>
                 <button onClick={onClose} aria-label="Close peer solutions" className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
@@ -108,7 +108,7 @@ const PeerSolutionsModal: React.FC<PeerSolutionsModalProps> = ({
                       <Eye size={20} />
                     </div>
                     <p className="text-sm font-bold text-slate-300">No peer solutions yet</p>
-                    <p className="text-[11px] text-slate-500 font-bold">Be the first to get yours approved and shared here.</p>
+                    <p className="text-[12px] text-slate-500 font-bold">Be the first to get yours approved and shared here.</p>
                   </div>
                 )}
 
@@ -128,11 +128,11 @@ const PeerSolutionsModal: React.FC<PeerSolutionsModalProps> = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-extrabold text-white truncate">{s.user.name || 'Anonymous Learner'}</p>
-                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                        <p className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">
                           {type === 'assignment' ? s.fileName : s.title} · {new Date(s.submittedAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <span className="text-[11px] font-black text-purple-400 uppercase tracking-widest shrink-0">View</span>
+                      <span className="text-[12px] font-black text-purple-400 uppercase tracking-widest shrink-0">View</span>
                     </button>
 
                     {/* Expanded detail */}
@@ -141,20 +141,20 @@ const PeerSolutionsModal: React.FC<PeerSolutionsModalProps> = ({
                         {type === 'project' && (
                           <>
                             {s.description && (
-                              <p className="text-[11px] text-slate-400 leading-relaxed">{s.description}</p>
+                              <p className="text-[12px] text-slate-400 leading-relaxed">{s.description}</p>
                             )}
                             <div className="flex flex-wrap gap-2">
                               <a href={s.sourceCodeUrl} target="_blank" rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-black uppercase tracking-wider hover:bg-emerald-500/20 transition-colors">
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[12px] font-black uppercase tracking-wider hover:bg-emerald-500/20 transition-colors">
                                 <GitBranch size={12} /> Source Code
                               </a>
                               <a href={s.reportUrl} target="_blank" rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[11px] font-black uppercase tracking-wider hover:bg-blue-500/20 transition-colors">
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[12px] font-black uppercase tracking-wider hover:bg-blue-500/20 transition-colors">
                                 <FileText size={12} /> Report
                               </a>
                               {s.githubUrl && (
                                 <a href={s.githubUrl} target="_blank" rel="noopener noreferrer"
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-black uppercase tracking-wider hover:bg-slate-700 transition-colors">
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-[12px] font-black uppercase tracking-wider hover:bg-slate-700 transition-colors">
                                   <ExternalLink size={12} /> Repo
                                 </a>
                               )}
@@ -163,7 +163,7 @@ const PeerSolutionsModal: React.FC<PeerSolutionsModalProps> = ({
                         )}
                         {type === 'assignment' && (
                           <a href={s.fileUrl} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[11px] font-bold hover:bg-purple-500/20 transition-colors w-fit">
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[12px] font-bold hover:bg-purple-500/20 transition-colors w-fit">
                             <FileText size={14} /> Open {s.fileName}
                           </a>
                         )}
@@ -186,11 +186,11 @@ const PeerSolutionsModal: React.FC<PeerSolutionsModalProps> = ({
                   }`}>
                     {shareOn && <Check size={12} strokeWidth={4} />}
                   </span>
-                  <span className="text-[11px] font-bold text-slate-300">
+                  <span className="text-[12px] font-bold text-slate-300">
                     Share my solution with peers
                   </span>
                 </button>
-                <span className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 text-[12px] font-bold text-slate-500 uppercase tracking-wider">
                   <Share2 size={11} /> Privacy respected · no email/phone shown
                 </span>
               </div>

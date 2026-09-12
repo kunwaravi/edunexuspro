@@ -30,12 +30,6 @@ export interface IotSection {
   quizzes: IotQuiz[];
 }
 
-export interface IotFinalExamQuestion {
-  text: string;
-  options: string[];
-  correctAnswer: string;
-}
-
 export const iotSections: IotSection[] = [
   // ──────────────────────────────────────────────────────────────────────────
   // WEEK 1 — Introduction to IoT & Smart Systems
@@ -942,23 +936,3 @@ export const iotSections: IotSection[] = [
 // ──────────────────────────────────────────────────────────────────────────────
 // IoT FINAL EXAM — 18 distinct questions replacing the near-identical templates
 // ──────────────────────────────────────────────────────────────────────────────
-export const iotFinalExam: IotFinalExamQuestion[] = [
-  { text: 'An IoT device performs: sense → process → connect → act. Which pair is the physical-world interface?', options: ['Sense and act', 'Process and connect', 'Connect and sense only', 'Process only'], correctAnswer: 'Sense and act' },
-  { text: 'Which computing tier keeps time-critical logic working even when the internet is down?', options: ['Cloud', 'Edge', 'Fog only', 'The dashboard'], correctAnswer: 'Edge' },
-  { text: 'A raw analog sensor reading is 2048 on a 12-bit ADC with a 3.3V reference. The pin voltage is…', options: ['3.3V', '1.65V', '0.8V', '2.5V'], correctAnswer: '1.65V' },
-  { text: 'Which wiring is correct for UART?', options: ['TX to TX, RX to RX', 'TX to RX, RX to TX, shared ground', 'SCL to SCL, SDA to SDA', 'MOSI to MISO only'], correctAnswer: 'TX to RX, RX to TX, shared ground' },
-  { text: 'An I2C scan finds no devices. The two most likely causes are…', options: ['Wrong baud rate and wrong voltage', 'Missing pull-ups and wrong pins', 'Too much flash and too little RAM', 'No LCD and no camera'], correctAnswer: 'Missing pull-ups and wrong pins' },
-  { text: 'SPI is preferred over I2C when you need…', options: ['Many devices on two wires', 'High data rates (display, SD card)', 'Automatic device discovery', 'The lowest pin count'], correctAnswer: 'High data rates (display, SD card)' },
-  { text: 'Which transport protocol should carry a real-time sensor stream where a dropped sample is acceptable?', options: ['TCP', 'UDP', 'FTP', 'SMTP'], correctAnswer: 'UDP' },
-  { text: 'Why must firmware check `WiFi.isConnected()` before every network operation?', options: ['To save power', 'The link can drop; a check prevents failures and enables reconnect', 'It is required by law', 'To count bytes'], correctAnswer: 'The link can drop; a check prevents failures and enables reconnect' },
-  { text: 'A REST POST returns 401. That means…', options: ['Success', 'Authentication failed', 'Resource not found', 'Server crashed'], correctAnswer: 'Authentication failed' },
-  { text: 'In MQTT, `home/+/temp` subscribes to…', options: ['Exactly one topic', 'Temperature topics of every room at one level', 'Everything under home', 'Nothing'], correctAnswer: 'Temperature topics of every room at one level' },
-  { text: 'QoS 1 guarantees…', options: ['Exactly once delivery', 'At-least-once delivery (may duplicate)', 'Fire-and-forget', 'No delivery'], correctAnswer: 'At-least-once delivery (may duplicate)' },
-  { text: 'A retained message with the LWT pattern is used to…', options: ['Reduce bandwidth', 'Expose device presence/state to new subscribers and announce death', 'Encrypt traffic', 'Speed up boot'], correctAnswer: 'Expose device presence/state to new subscribers and announce death' },
-  { text: 'Which is the strongest practical authentication for production cloud IoT?', options: ['A shared token', 'Per-device X.509 certificates via mutual TLS', 'The MAC address', 'None'], correctAnswer: 'Per-device X.509 certificates via mutual TLS' },
-  { text: 'Why is `setInsecure()` on a TLS client unacceptable in production?', options: ['It is slow', 'It disables server verification, letting a MITM impersonate the server', 'It uses more RAM', 'It breaks the baud rate'], correctAnswer: 'It disables server verification, letting a MITM impersonate the server' },
-  { text: 'A battery sensor node lasts longest by…', options: ['Polling WiFi constantly', 'Measuring, publishing, then deep sleeping', 'Using 5V logic', 'Leaving the LED on'], correctAnswer: 'Measuring, publishing, then deep sleeping' },
-  { text: 'In IIoT, the factory-floor legacy protocol is usually…', options: ['Modbus', 'SMTP', 'DNS', 'WebSocket'], correctAnswer: 'Modbus' },
-  { text: 'Predictive maintenance catches failures by monitoring…', options: ['The device color', 'Drift in vibration/temperature/current signatures from a healthy baseline', 'WiFi RSSI', 'The CPU serial number'], correctAnswer: 'Drift in vibration/temperature/current signatures from a healthy baseline' },
-  { text: 'The capstone build order that avoids most rework is…', options: ['All hardware then all software', 'Requirements → architecture → vertical end-to-end slices', 'Dashboard first, then everything else', 'Random experimentation'], correctAnswer: 'Requirements → architecture → vertical end-to-end slices' },
-];

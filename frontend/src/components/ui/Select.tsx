@@ -33,7 +33,7 @@ const Select: React.FC<SelectProps> = ({
   return (
     <div className={`space-y-1.5 ${containerClassName}`}>
       {label && (
-        <label htmlFor={selectId} className="text-[11px] uppercase font-black tracking-wider text-slate-400">
+        <label htmlFor={selectId} className="text-[12px] uppercase font-black tracking-wider text-slate-400">
           {label}
         </label>
       )}
@@ -52,7 +52,7 @@ const Select: React.FC<SelectProps> = ({
         {children}
       </select>
       {error && (
-        <p id={errorId} role="alert" className="text-red-400 text-[11px] font-semibold pl-1 uppercase tracking-tight">
+        <p id={errorId} role="alert" className="text-red-400 text-[12px] font-semibold pl-1 uppercase tracking-tight">
           ⚠ {error}
         </p>
       )}

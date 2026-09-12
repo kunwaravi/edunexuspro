@@ -1,8 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
+import { requireEnrollment } from '../services/enrollmentService';
 import { logger } from '../lib/logger';
-import { validateBody } from '../middleware/validate';
+import { validateBody, sanitizeLinkUrl, sanitizeFileName, ASSIGNMENT_WEEKS_PER_COURSE } from '../middleware/validate';
 
 const router = Router();
 
@@ -16,10 +17,13 @@ const isAdmin = (req: any, res: Response, next: NextFunction): any => {
 };
 
 // GET /api/assignments/status/:courseId - Get all submissions for course
+// TASK 4: ACTIVE enrollment required.
 router.get('/status/:courseId', authenticateToken, async (req: any, res: Response, next: NextFunction): Promise<any> => {
   try {
     const { courseId } = req.params as any;
     const userId = req.user.id;
+
+    if (!(await requireEnrollment(req, res, courseId))) return;
 
     const submissions = await prisma.assignmentSubmission.findMany({
       where: { userId, courseId },
@@ -44,9 +48,30 @@ router.post(
       const userId = req.user.id;
       const weekNum = parseInt(weekNumber);
 
-      // Verify that student has passed modules up to that week
-      // Week 1 -> Module 5, Week 2 -> Module 10, Week 3 -> Module 15, Week 4 -> Module 20
-      const reqModuleOrder = weekNum * 5;
+      // fileUrl is echoed back to peers in the solutions browser and linked in
+      // the admin console, so an unchecked scheme (javascript:/data:) would be a
+      // stored-XSS payload against those viewers.
+      const safeFileUrl = fileUrl === undefined || fileUrl === null || fileUrl === ''
+        ? null
+        : sanitizeLinkUrl(fileUrl);
+      if (fileUrl && !safeFileUrl) {
+        return res.status(400).json({ message: 'Invalid file URL. Use an absolute http(s) link or an /uploads path.' });
+      }
+      const safeFileName = sanitizeFileName(fileName) || 'submission';
+      if (String(fileName).length > 200) {
+        return res.status(400).json({ message: 'File name is too long.' });
+      }
+
+      // TASK 4: ACTIVE enrollment required to submit course assignments.
+      if (!(await requireEnrollment(req, res, courseId))) return;
+
+      // Verify that student has passed modules up to that week. The mapping is
+      // derived from the course's real module count so it stays 5/10/15/20 on the
+      // 20-module tracks, while the 5-module tracks resolve to 2/3/4/5 instead of
+      // demanding modules 10/15/20 that do not exist ("Invalid week number").
+      const totalModules = await prisma.module.count({ where: { courseId } });
+      const requiredModules = totalModules > 0 ? totalModules : 20;
+      const reqModuleOrder = Math.ceil((weekNum / ASSIGNMENT_WEEKS_PER_COURSE) * requiredModules);
       const moduleRecord = await prisma.module.findFirst({
         where: { courseId, week: reqModuleOrder }
       });
@@ -76,7 +101,7 @@ router.post(
         },
         update: {
           fileName,
-          fileUrl: fileUrl || `/uploads/mock_${fileName}`,
+          fileUrl: safeFileUrl || `/uploads/mock_${safeFileName}`,
           status: 'PENDING',
           feedback: null
         },
@@ -85,7 +110,7 @@ router.post(
           courseId,
           weekNumber: weekNum,
           fileName,
-          fileUrl: fileUrl || `/uploads/mock_${fileName}`,
+          fileUrl: safeFileUrl || `/uploads/mock_${safeFileName}`,
           status: 'PENDING'
         }
       });
@@ -206,6 +231,9 @@ router.get('/:courseId/solutions', authenticateToken, async (req: any, res: Resp
       return res.status(400).json({ message: 'Valid weekNumber query param is required.' });
     }
 
+    // TASK 4: ACTIVE enrollment required to browse peer solutions.
+    if (!(await requireEnrollment(req, res, courseId))) return;
+
     // Gate: viewer must have this week approved before browsing peers (freeCodeCamp-style)
     const mySubmission = await prisma.assignmentSubmission.findUnique({
       where: { userId_courseId_weekNumber: { userId, courseId, weekNumber } }
@@ -255,6 +283,9 @@ router.patch(
 
       const submission = await prisma.assignmentSubmission.findUnique({ where: { id } });
       if (!submission) return res.status(404).json({ message: 'Submission not found.' });
+
+      // TASK 4: premium operation on a course's learning record — enrollment required.
+      if (!(await requireEnrollment(req, res, submission.courseId))) return;
 
       const isOwner = (req as any).user.id === submission.userId;
       const isAdminUser = (req as any).user.role === 'ADMIN';

@@ -8,13 +8,17 @@ import { getDailyChallenge, submitDailyChallenge } from '../services/practiceSer
 
 const router = Router();
 
+// Categories with seeded practice questions in the arena. Add a category here
+// when its questions are seeded (D1e added the CADD & BIM 'Design' set).
+const PRACTICE_CATEGORIES: string[] = ['Programming', 'Electronics', 'Design'];
+
 // GET /api/practice/questions - Fetch practice questions by category
 router.get('/questions', authenticateToken, async (req: any, res: Response, next: NextFunction): Promise<any> => {
   try {
     const { category } = req.query;
 
-    if (!category || (category !== 'Programming' && category !== 'Electronics')) {
-      return res.status(400).json({ message: 'Valid category (Programming or Electronics) is required.' });
+    if (!category || !PRACTICE_CATEGORIES.includes(category)) {
+      return res.status(400).json({ message: 'Valid category (Programming, Electronics or Design) is required.' });
     }
 
     const questions = await prisma.practiceQuestion.findMany({
@@ -48,7 +52,7 @@ router.post(
       const { category, answers } = req.body;
       const userId = req.user.id;
 
-      if (category !== 'Programming' && category !== 'Electronics') {
+      if (!PRACTICE_CATEGORIES.includes(category)) {
         return res.status(400).json({ message: 'Invalid category.' });
       }
 
@@ -177,10 +181,24 @@ router.post(
   }
 );
 
-// GET /api/practice/leaderboard/public - Get privacy-safe top student rankings for landing page
+// Partial display name for PUBLIC surfaces (master task §17/§26).
+//
+// The endpoint was labelled "privacy-safe" but returned each student's full
+// name and college to an unauthenticated caller — so real learners' full
+// identities were published on a public, search-indexable landing page with no
+// opt-in. The leaderboard keeps its social-proof value with the surname
+// reduced to an initial; the full leaderboard behind auth is unchanged.
+const toPublicDisplayName = (name: string | null | undefined): string => {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'EduNexus Learner';
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+};
+
+// GET /api/practice/leaderboard/public - Top student rankings for landing page
 router.get('/leaderboard/public', async (req: any, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const leaderboard = await prisma.user.findMany({
+    const rows = await prisma.user.findMany({
       where: {
         points: { gt: 0 }
       },
@@ -189,13 +207,22 @@ router.get('/leaderboard/public', async (req: any, res: Response, next: NextFunc
         points: true,
         badges: true,
         avatarUrl: true,
-        collegeName: true,
+        // collegeName is deliberately NOT selected — an institution plus a
+        // name fragment is enough to identify a student in a small college.
       },
       orderBy: {
         points: 'desc',
       },
       take: 5,
     });
+
+    const leaderboard = rows.map((row) => ({
+      name: toPublicDisplayName(row.name),
+      points: row.points,
+      badges: row.badges,
+      avatarUrl: row.avatarUrl,
+    }));
+
     res.json({ leaderboard });
   } catch (error: any) {
     logger.error('Fetch public leaderboard error:', error);

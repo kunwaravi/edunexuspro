@@ -30,12 +30,6 @@ export interface EmbeddedSection {
   quizzes: EmbeddedQuiz[];
 }
 
-export interface EmbeddedFinalExamQuestion {
-  text: string;
-  options: string[];
-  correctAnswer: string;
-}
-
 export const embeddedSections: EmbeddedSection[] = [
   // ──────────────────────────────────────────────────────────────────────────
   // WEEK 1 — Introduction to Embedded Systems
@@ -937,25 +931,4 @@ export const embeddedSections: EmbeddedSection[] = [
       { text: 'Failing loudly and early means…', options: ['assertions and logged error paths, not silent tolerance', 'crashing every build', 'noisier hardware', 'more delays'], correctAnswer: 'assertions and logged error paths, not silent tolerance' },
     ],
   },
-];
-
-export const embeddedFinalExam: EmbeddedFinalExamQuestion[] = [
-  { text: 'A 12-bit ADC with a 3.3V reference reads a count of 2048. The voltage is closest to…', options: ['1.65 V', '3.3 V', '0.8 V', '2.5 V'], correctAnswer: '1.65 V' },
-  { text: 'Which register pair does the CPU read on Cortex-M boot to get the initial stack pointer and reset handler?', options: ['addresses 0x00000000 and 0x00000004 of the vector table', 'R0 and R1', 'flash and SRAM', 'the linker script'], correctAnswer: 'addresses 0x00000000 and 0x00000004 of the vector table' },
-  { text: 'A peripheral whose clock gate is never enabled…', options: ['reads as zeros and appears dead', 'runs at double speed', 'interrupts forever', 'wakes the watchdog'], correctAnswer: 'reads as zeros and appears dead' },
-  { text: 'The optimizer may cache a variable read unless the variable is…', options: ['volatile', 'const', 'static', 'register'], correctAnswer: 'volatile' },
-  { text: 'On AVR, Timer1 (16-bit) at a 1MHz count rate overflows every…', options: ['~65.5 ms', '1 ms', '1 s', '10 s'], correctAnswer: '~65.5 ms' },
-  { text: 'In SPI mode 0 (CPOL=0, CPHA=0), data is sampled…', options: ['on the rising (first) clock edge', 'on the falling edge', 'on both edges', 'when CS rises'], correctAnswer: 'on the rising (first) clock edge' },
-  { text: 'I2C slaves are addressed on the bus with…', options: ['a 7-bit address sent by the master after START', 'their MAC address', 'a chip-select wire', 'the clock speed'], correctAnswer: 'a 7-bit address sent by the master after START' },
-  { text: 'The final byte of an I2C master read is terminated with…', options: ['a NACK (master), then a STOP', 'an ACK', 'a repeated START', 'clock stretching'], correctAnswer: 'a NACK (master), then a STOP' },
-  { text: 'An ISR that must stay fast should…', options: ['service hardware, save essentials, set a flag, and return', 'parse the whole packet', 'call printf', 'sleep'], correctAnswer: 'service hardware, save essentials, set a flag, and return' },
-  { text: 'To write a single GPIO bit atomically on STM32 you use…', options: ['the BSRR set/reset register', 'ODR read-modify-write', 'a delay loop', 'the debugger'], correctAnswer: 'the BSRR set/reset register' },
-  { text: 'A FreeRTOS queue is the safe way for tasks to share data because…', options: ['the queue owns the data and both sides block/time out correctly', 'it disables all interrupts', 'it uses global variables', 'it copies to the network'], correctAnswer: 'the queue owns the data and both sides block/time out correctly' },
-  { text: 'Two tasks each hold one mutex and wait for the other\'s is a…', options: ['deadlock', 'starvation', 'priority inversion', 'race'], correctAnswer: 'deadlock' },
-  { text: 'A priority-inheriting mutex fixes…', options: ['priority inversion', 'deadlock', 'stack overflow', 'heap fragmentation'], correctAnswer: 'priority inversion' },
-  { text: 'To prove a schedule holds in real time you must budget…', options: ['worst-case execution plus higher-priority load, with headroom', 'the average case', 'the best case', 'the clock frequency only'], correctAnswer: 'worst-case execution plus higher-priority load, with headroom' },
-  { text: 'The non-intrusive way to capture what happened right before a crash is…', options: ['a RAM ring-buffer log', 'printf in the ISR', 'a breakpoint', 'a longer delay'], correctAnswer: 'a RAM ring-buffer log' },
-  { text: 'Making firmware logic testable on a PC requires…', options: ['separating pure logic from register access (seams)', 'disabling the optimizer', 'a bigger MCU', 'no tests'], correctAnswer: 'separating pure logic from register access (seams)' },
-  { text: 'Documentation that drifts from the code is…', options: ['misleading — update it in the same commit as the change', 'harmless', 'an improvement', 'a good thing'], correctAnswer: 'misleading — update it in the same commit as the change' },
-  { text: 'The professional response to a measurement you have not made is…', options: ['measure it before claiming a number', 'guess a round number', 'copy a datasheet value', 'avoid the question'], correctAnswer: 'measure it before claiming a number' },
 ];

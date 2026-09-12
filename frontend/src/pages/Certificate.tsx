@@ -467,7 +467,7 @@ const Certificate = () => {
       {/* Action Printing controls */}
       <div className="w-full flex flex-col items-center gap-4 no-print pt-2">
         <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-4 max-w-xl text-center space-y-2">
-          <p className="text-[11px] text-amber-400 font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5">
+          <p className="text-[12px] text-amber-400 font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5">
             ⚠️ Certificate Download Instructions
           </p>
           <p className="text-xs text-slate-350 leading-relaxed">

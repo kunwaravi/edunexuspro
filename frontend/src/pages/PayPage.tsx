@@ -23,7 +23,6 @@ const UPI_ID = (import.meta.env.VITE_UPI_ID as string) || 'edunexuss@ptyes';
 const PAYEE_NAME = (import.meta.env.VITE_UPI_PAYEE as string) || 'EDUNEXUS PRO';
 // ───────────────────────────────────────────────────────────────────────────────
 
-const BASE_PRICE = 699;
 const TAGLINE = 'Learn. Build. Innovate.';
 
 const HOW_TO_PAY = [
@@ -55,6 +54,12 @@ const PayPage: React.FC = () => {
   const [intentError, setIntentError] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
+  // Course price comes from the catalog API (single source of truth — no hardcoded ₹699).
+  const [coursePrice, setCoursePrice] = useState<number | null>(null);
+  const [priceError, setPriceError] = useState(false);
+  // Canonical Course.id resolved from the (possibly slug) route param.
+  const [courseIdResolved, setCourseIdResolved] = useState<string | undefined>(courseId);
+
   // Referral reward (capped at 50% — issue #68)
   const referralCount = user?.referralCount || 0;
   const referralPaidCount = user?.referralPaidCount || 0;
@@ -62,14 +67,31 @@ const PayPage: React.FC = () => {
   const referralDiscount = referralSuccess ? 0.5 : 0;
 
   const finalDiscount = Math.max(discount, referralDiscount);
-  const currentPrice = Math.round(BASE_PRICE * (1 - finalDiscount));
+  const currentPrice = coursePrice == null ? 0 : Math.round(coursePrice * (1 - finalDiscount));
+
+  // Load the course's price (and resolve its canonical id) from the public detail endpoint.
+  useEffect(() => {
+    let mounted = true;
+    api.get(`/courses/${courseId}/public`)
+      .then((res) => {
+        if (!mounted) return;
+        setCoursePrice(res.data.price);
+        if (res.data.id) setCourseIdResolved(res.data.id);
+      })
+      .catch(() => {
+        if (mounted) setPriceError(true);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [courseId]);
 
   // If the course is already unlocked, bounce to the paid state.
   useEffect(() => {
     let mounted = true;
     const checkStatus = async () => {
       try {
-        const res = await api.get(`/payments/status/${courseId}`);
+        const res = await api.get(`/payments/status/${courseIdResolved}`);
         if (mounted) {
           setIsPaid(!!res.data.paid);
           // Resume "awaiting admin verification" if a proof is already pending.
@@ -87,7 +109,7 @@ const PayPage: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [courseId]);
+  }, [courseIdResolved]);
 
   const handleApplyCoupon = () => {
     setCouponError('');
@@ -102,7 +124,8 @@ const PayPage: React.FC = () => {
       setDiscount(0.3);
       setIsCouponApplied(true);
     } else if (code === 'NEXUS499' || code === 'EDU499' || code === 'SPECIAL499') {
-      setDiscount(200 / BASE_PRICE);
+      // Flat ₹200 off, as a fraction of the live course price.
+      setDiscount(200 / (coursePrice || 699));
       setIsCouponApplied(true);
     } else {
       setCouponError('Invalid coupon code');
@@ -175,7 +198,7 @@ const PayPage: React.FC = () => {
     setPaymentError(null);
     try {
       const orderRes = await api.post('/payments/create-order', {
-        courseId,
+        courseId: courseIdResolved,
         amount: currentPrice,
         couponCode: isCouponApplied ? couponCode : undefined,
       });
@@ -190,7 +213,7 @@ const PayPage: React.FC = () => {
         if (verifyRes.data.payment?.status === 'VERIFIED') {
           // Backend confirmed free/coupon checkout — safe to unlock.
           addToast('Your certificate is unlocked!', 'success');
-          navigate(`/certificate?courseId=${encodeURIComponent(courseId || '')}`);
+          navigate(`/certificate?courseId=${encodeURIComponent(courseIdResolved || '')}`);
         } else {
           // Backend says PENDING — awaiting admin verification. No false success.
           setSubmitted(true);
@@ -203,10 +226,33 @@ const PayPage: React.FC = () => {
     }
   };
 
-  if (checking) {
+  if (checking || (coursePrice === null && !priceError)) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-500"></div>
+      </div>
+    );
+  }
+
+  // Could not load the course price — cannot build a correct charge.
+  if (priceError) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto">
+            <AlertCircle size={32} className="text-red-500" />
+          </div>
+          <h1 className="text-xl font-black text-slate-900 mt-4">Could not load this course</h1>
+          <p className="text-sm text-slate-500 mt-2">
+            We couldn't fetch the course details. Please go back and try again in a moment.
+          </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-6 w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }
@@ -224,13 +270,13 @@ const PayPage: React.FC = () => {
             Your payment is verified and your certificate is ready.
           </p>
           <button
-            onClick={() => navigate(`/certificate?courseId=${encodeURIComponent(courseId || '')}`)}
+            onClick={() => navigate(`/certificate?courseId=${encodeURIComponent(courseIdResolved || '')}`)}
             className="mt-6 w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-black rounded-xl transition"
           >
             Open High-Resolution Certificate
           </button>
           <button
-            onClick={() => navigate(`/course/${courseId}`)}
+            onClick={() => navigate(`/course/${courseIdResolved}`)}
             className="mt-3 w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition"
           >
             Back to Course
@@ -286,22 +332,22 @@ const PayPage: React.FC = () => {
             >
               <ArrowLeft size={16} /> Back
             </button>
-            <span className="inline-flex items-center gap-1 bg-white/15 border border-white/25 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+            <span className="inline-flex items-center gap-1 bg-white/15 border border-white/25 rounded-full px-3 py-1 text-[12px] font-black uppercase tracking-widest">
               <ShieldCheck size={12} /> Secure Payment
             </span>
           </div>
           <div className="mt-5 text-center">
             <h1 className="text-lg font-black tracking-tight">EDUNEXUS PRO</h1>
-            <p className="text-[11px] text-white/80 font-semibold uppercase tracking-[0.2em]">{TAGLINE}</p>
+            <p className="text-[12px] text-white/80 font-semibold uppercase tracking-[0.2em]">{TAGLINE}</p>
           </div>
         </div>
 
         {/* ── Amount ─────────────────────────────────────────────── */}
         <div className="px-6 pt-6 pb-2 text-center">
-          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Accreditation Fee</p>
+          <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest">Credential Fee</p>
           <div className="mt-1 flex items-center justify-center gap-2">
-            {finalDiscount > 0 && (
-              <span className="text-slate-400 line-through text-lg font-semibold">₹{BASE_PRICE}</span>
+            {finalDiscount > 0 && coursePrice != null && (
+              <span className="text-slate-400 line-through text-lg font-semibold">₹{coursePrice}</span>
             )}
             <span className="text-4xl font-black text-slate-900">₹{currentPrice}</span>
           </div>
@@ -328,7 +374,7 @@ const PayPage: React.FC = () => {
             <div className="mt-4 flex justify-center bg-white rounded-2xl p-4 shadow-sm w-fit mx-auto">
               <QRCodeSVG value={upiPayload(currentPrice)} size={190} level="H" includeMargin />
             </div>
-            <p className="text-center text-[11px] text-slate-400 mt-2 font-mono">
+            <p className="text-center text-[12px] text-slate-400 mt-2 font-mono">
               Pay {PAYEE_NAME} • ₹{currentPrice} • {UPI_ID}
             </p>
           </div>
@@ -342,7 +388,7 @@ const PayPage: React.FC = () => {
           >
             <Smartphone size={20} /> Pay by Any UPI App
           </button>
-          <p className="text-center text-[11px] text-slate-400 mt-2 font-medium">
+          <p className="text-center text-[12px] text-slate-400 mt-2 font-medium">
             {isMobileDevice ? 'Tap to open your preferred UPI app' : 'Mobile-only — scan the QR or copy the UPI ID on your phone'}
           </p>
 
@@ -356,7 +402,7 @@ const PayPage: React.FC = () => {
 
         {/* ── UPI ID + copy ──────────────────────────────────────── */}
         <div className="px-6 pt-4">
-          <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">UPI ID</label>
+          <label className="text-[12px] font-black text-slate-500 uppercase tracking-widest">UPI ID</label>
           <div className="mt-1.5 flex items-center gap-2">
             <div className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 font-mono font-semibold truncate">
               {UPI_ID}
@@ -390,20 +436,20 @@ const PayPage: React.FC = () => {
               Apply
             </button>
           </div>
-          {couponError && <p className="text-[11px] text-red-600 font-bold mt-1">{couponError}</p>}
+          {couponError && <p className="text-[12px] text-red-600 font-bold mt-1">{couponError}</p>}
           {isCouponApplied && (
-            <p className="text-[11px] text-emerald-600 font-bold mt-1">
+            <p className="text-[12px] text-emerald-600 font-bold mt-1">
               {['NEXUS499', 'EDU499', 'SPECIAL499'].includes(couponCode.toUpperCase().trim())
                 ? 'Coupon Applied: course price reduced to ₹499!'
                 : `Coupon Applied: ${Math.round(discount * 100)}% OFF!`}
             </p>
           )}
           {referralSuccess ? (
-            <p className="text-[11px] text-emerald-600 font-bold mt-1">
+            <p className="text-[12px] text-emerald-600 font-bold mt-1">
               Referral Reward: 50% OFF unlocked! ({referralCount}/15 registered, {referralPaidCount}/5 paid)
             </p>
           ) : (
-            <p className="text-[11px] text-slate-400 font-medium mt-1">
+            <p className="text-[12px] text-slate-400 font-medium mt-1">
               Referral Progress: {referralCount}/15 registered, {referralPaidCount}/5 paid
             </p>
           )}
@@ -415,12 +461,12 @@ const PayPage: React.FC = () => {
           <ol className="mt-2 space-y-2">
             {HOW_TO_PAY.map((s) => (
               <li key={s.step} className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-sky-600 text-white text-[11px] font-black flex items-center justify-center shrink-0">
+                <span className="w-6 h-6 rounded-full bg-sky-600 text-white text-[12px] font-black flex items-center justify-center shrink-0">
                   {s.step}
                 </span>
                 <div>
                   <p className="text-sm font-bold text-slate-800 leading-tight">{s.title}</p>
-                  <p className="text-[11px] text-slate-500">{s.desc}</p>
+                  <p className="text-[12px] text-slate-500">{s.desc}</p>
                 </div>
               </li>
             ))}
@@ -449,11 +495,11 @@ const PayPage: React.FC = () => {
               </>
             )}
           </button>
-          <p className="text-center text-[11px] text-slate-400 mt-3 leading-relaxed">
+          <p className="text-center text-[12px] text-slate-400 mt-3 leading-relaxed">
             We never ask for UPI PIN, bank password, OTP or card details. Your certificate unlocks only
             after our team verifies the payment.
           </p>
-          <Link to="/refund" className="block text-center text-[11px] text-sky-600 font-bold hover:underline mt-1">
+          <Link to="/refund" className="block text-center text-[12px] text-sky-600 font-bold hover:underline mt-1">
             Refund Policy
           </Link>
         </form>

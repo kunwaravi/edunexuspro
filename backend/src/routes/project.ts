@@ -1,8 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
+import { requireEnrollment } from '../services/enrollmentService';
 import { logger } from '../lib/logger';
-import { validateBody } from '../middleware/validate';
+import { validateBody, sanitizeLinkUrl } from '../middleware/validate';
 
 const router = Router();
 
@@ -16,10 +17,13 @@ const isAdmin = (req: any, res: Response, next: NextFunction): any => {
 };
 
 // GET /api/projects/status/:courseId - Get student project status
+// TASK 4: ACTIVE enrollment required.
 router.get('/status/:courseId', authenticateToken, async (req: any, res: Response, next: NextFunction): Promise<any> => {
   try {
     const { courseId } = req.params;
     const userId = req.user.id;
+
+    if (!(await requireEnrollment(req, res, courseId))) return;
 
     const submission = await prisma.projectSubmission.findUnique({
       where: {
@@ -44,14 +48,31 @@ router.post(
       const { courseId, title, description, sourceCodeUrl, reportUrl, githubUrl } = req.body;
       const userId = req.user.id;
 
-      // Check if student has completed Week 4 (i.e. Module 20)
+      // These links are stored verbatim, replayed to peers in the solutions
+      // browser and rendered as hrefs in the admin console — an unchecked scheme
+      // (javascript:/data:) would be stored XSS against those viewers.
+      const safeSourceCodeUrl = sanitizeLinkUrl(sourceCodeUrl);
+      const safeReportUrl = sanitizeLinkUrl(reportUrl);
+      const safeGithubUrl = githubUrl ? sanitizeLinkUrl(githubUrl) : null;
+      if (!safeSourceCodeUrl || !safeReportUrl || (githubUrl && !safeGithubUrl)) {
+        return res.status(400).json({ message: 'Invalid project link. Use absolute http(s) URLs (https://…).' });
+      }
+
+      // TASK 4: ACTIVE enrollment required to submit the final project.
+      if (!(await requireEnrollment(req, res, courseId))) return;
+
+      // The gate is every module of THIS course, derived from the DB — the
+      // hardcoded 20 permanently locked Final Projects on the 5-module tracks
+      // (their ModuleProgress can never reach 20).
       if (req.user.role !== 'ADMIN') {
+        const totalModules = await prisma.module.count({ where: { courseId } });
+        const requiredModules = totalModules > 0 ? totalModules : 20;
         const completedCount = await prisma.moduleProgress.count({
           where: { userId, courseId, quizPassed: true }
         });
-        if (completedCount < 20) {
-          return res.status(403).json({ 
-            message: `Locked Project: You must pass the quiz for all 20 modules before submitting your Final Project. Currently completed: ${completedCount}/20.`
+        if (completedCount < requiredModules) {
+          return res.status(403).json({
+            message: `Locked Project: You must pass the quiz for all ${requiredModules} modules before submitting your Final Project. Currently completed: ${completedCount}/${requiredModules}.`
           });
         }
       }
@@ -63,9 +84,9 @@ router.post(
         update: {
           title,
           description,
-          sourceCodeUrl,
-          reportUrl,
-          githubUrl: githubUrl || null,
+          sourceCodeUrl: safeSourceCodeUrl,
+          reportUrl: safeReportUrl,
+          githubUrl: safeGithubUrl,
           status: 'PENDING',
           feedback: null
         },
@@ -74,9 +95,9 @@ router.post(
           courseId,
           title,
           description,
-          sourceCodeUrl,
-          reportUrl,
-          githubUrl: githubUrl || null,
+          sourceCodeUrl: safeSourceCodeUrl,
+          reportUrl: safeReportUrl,
+          githubUrl: safeGithubUrl,
           status: 'PENDING'
         }
       });
@@ -191,6 +212,9 @@ router.get('/:courseId/solutions', authenticateToken, async (req: any, res: Resp
     const { courseId } = req.params as any;
     const userId = req.user.id;
 
+    // TASK 4: ACTIVE enrollment required to browse peer solutions.
+    if (!(await requireEnrollment(req, res, courseId))) return;
+
     // Gate: viewer must have their project approved first
     const mySubmission = await prisma.projectSubmission.findUnique({
       where: { userId_courseId: { userId, courseId } }
@@ -242,6 +266,9 @@ router.patch(
 
       const submission = await prisma.projectSubmission.findUnique({ where: { id } });
       if (!submission) return res.status(404).json({ message: 'Submission not found.' });
+
+      // TASK 4: premium operation on a course's learning record — enrollment required.
+      if (!(await requireEnrollment(req, res, submission.courseId))) return;
 
       const isOwner = (req as any).user.id === submission.userId;
       const isAdminUser = (req as any).user.role === 'ADMIN';

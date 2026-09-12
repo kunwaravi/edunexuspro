@@ -1,15 +1,18 @@
 import { Router } from 'express';
 import * as courseService from '../services/courseService';
+import { requireEnrollment } from '../services/enrollmentService';
 import { authenticateToken, isAdmin } from '../middleware/auth';
 import { validate, createCourseSchema, createModuleSchema, createTopicSchema } from '../middleware/validation';
 
 const router = Router();
 
-// GET /api/courses - List all courses with lightweight module lists (LAZY LOAD: does NOT return topic content text/code)
+// GET /api/courses - Published catalog with optional ?category=<slug> filter.
+// moduleCount is DERIVED from the Module table (never hardcoded).
 router.get('/', async (req: any, res: any, next: any) => {
   try {
-    const curriculumMap = await courseService.getAllCourses();
-    res.json(curriculumMap);
+    const categorySlug = typeof req.query.category === 'string' ? req.query.category : undefined;
+    const catalog = await courseService.getCatalogCourses(categorySlug);
+    res.json(catalog);
   } catch (error) {
     next(error);
   }
@@ -32,11 +35,14 @@ router.get('/:courseId/public', async (req: any, res: any, next: any) => {
 });
 
 // GET /api/courses/:courseId/module/:week - Dynamic fetch for ONE module's full topics (Lazy loading detail view)
+// TASK 4: premium lesson text/code — requires ACTIVE enrollment (admin exempt).
 router.get('/:courseId/module/:week', authenticateToken, async (req: any, res: any, next: any) => {
   try {
     const { courseId, week } = req.params;
     const weekNum = parseInt(week);
     const userId = req.user.id;
+
+    if (!(await requireEnrollment(req, res, courseId))) return;
 
     const moduleRecord = await courseService.getModuleByWeek(courseId, weekNum, userId);
 
@@ -50,11 +56,28 @@ router.get('/:courseId/module/:week', authenticateToken, async (req: any, res: a
   }
 });
 
+// GET /api/courses/:slug - Public detail resolved by slug OR legacy id (no premium Topic content).
+// Registered AFTER /:courseId/public and /:courseId/module/:week so specific routes win.
+router.get('/:slug', async (req: any, res: any, next: any) => {
+  try {
+    const { slug } = req.params;
+    const courseDetails = await courseService.getPublicCourseDetails(slug);
+
+    if (!courseDetails) {
+      return res.status(404).json({ message: `Course ${slug} not found.` });
+    }
+
+    res.json(courseDetails);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // ADMIN CRUD - POST /api/courses (Create new Course)
 router.post('/', authenticateToken, isAdmin, validate(createCourseSchema), async (req: any, res: any, next: any) => {
   try {
-    const { id, title, description, price } = req.body;
-    const course = await courseService.createCourse({ id, title, description, price });
+    const { id, title, description, price, banner, thumbnail, comingSoon } = req.body;
+    const course = await courseService.createCourse({ id, title, description, price, banner, thumbnail, comingSoon });
     res.status(201).json(course);
   } catch (error) {
     next(error);
@@ -65,9 +88,9 @@ router.post('/', authenticateToken, isAdmin, validate(createCourseSchema), async
 router.put('/:courseId', authenticateToken, isAdmin, async (req: any, res: any, next: any) => {
   try {
     const { courseId } = req.params;
-    const { title, description, price } = req.body;
+    const { title, description, price, banner, thumbnail, comingSoon } = req.body;
 
-    const course = await courseService.updateCourse(courseId, { title, description, price });
+    const course = await courseService.updateCourse(courseId, { title, description, price, banner, thumbnail, comingSoon });
     res.json(course);
   } catch (error) {
     next(error);

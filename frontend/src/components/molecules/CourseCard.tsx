@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { BookOpen, ChevronUp, ChevronDown } from 'lucide-react';
+import React from 'react';
+import { Hourglass, ArrowRight } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../atoms/Card';
 import Badge from '../atoms/Badge';
+import CourseBanner from './CourseBanner';
+import CourseShareButton from './CourseShareButton';
 
 interface SyllabusItem {
   week: number;
@@ -20,8 +21,23 @@ interface CourseCardProps {
   barColor?: string; // Tailwind color class for progress bar
   progress?: number;
   weekCompleted?: number;
+  totalWeeks?: number;
   completed?: boolean;
+  // --- API-driven catalog fields (TASK 5/6): every value below comes from the
+  // catalog endpoint — nothing here is hardcoded/derived client-side. ---
+  slug?: string; // preferred navigation target (/course/:slug), falls back to id
+  categoryName?: string;
   difficulty?: string;
+  duration?: string;
+  moduleCount?: number;
+  certificateAvailable?: boolean;
+  featured?: boolean;
+  price?: number | null;
+  thumbnail?: string;
+  // TASK 6: course-specific banner (Course.banner from the API) + admin
+  // "Coming Soon" state — both drive the new professional card layout.
+  banner?: string | null;
+  comingSoon?: boolean;
   tags?: string[];
   syllabus?: SyllabusItem[];
   type?: 'catalog' | 'dashboard';
@@ -37,91 +53,119 @@ const CourseCard: React.FC<CourseCardProps> = ({
   barColor = 'bg-blue-500',
   progress = 0,
   weekCompleted = 0,
+  totalWeeks,
   completed = false,
+  slug,
+  categoryName,
   difficulty,
-  syllabus = [],
+  duration,
+  moduleCount,
+  certificateAvailable,
+  featured = false,
+  price,
+  thumbnail,
+  banner,
+  comingSoon = false,
+  tags = [],
   type = 'dashboard',
   onAction,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
   if (type === 'catalog') {
     return (
-      <Card 
-        className={`p-6 ${isExpanded ? 'border-amber-500/20 shadow-amber-500/5' : 'border-slate-850'}`}
-        variant="glass"
-      >
-        {/* Visual Accent */}
-        <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl ${color} rounded-full blur-3xl pointer-events-none`}></div>
-        
-        <div className="space-y-4">
-          <div className="flex justify-between items-center flex-wrap gap-2">
-            <Badge variant="accent">Free to Learn</Badge>
-            {difficulty && (
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide">
-                ⚡ {difficulty}
-              </span>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <h3 className="text-xl font-bold text-white tracking-tight">{title}</h3>
-            <p className="text-slate-400 text-xs leading-relaxed">{desc}</p>
-          </div>
-
-          {syllabus.length > 0 && (
-            <div className="pt-2">
-              <button 
-                onClick={() => setIsExpanded(!isExpanded)}
-                className={`w-full flex items-center justify-between p-3 rounded-xl border text-xs font-bold transition-all ${
-                  isExpanded 
-                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' 
-                    : 'bg-slate-950/40 border-slate-900 text-slate-355 hover:bg-slate-900/60 hover:text-white'
-                }`}
-              >
-                <span className="flex items-center gap-1.5 uppercase tracking-wider">
-                  <BookOpen size={14} /> {isExpanded ? "Hide Syllabus Details" : "View Syllabus Details"}
-                </span>
-                {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
-
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden mt-3.5 space-y-3.5 pl-1.5"
-                  >
-                    <h4 className="text-[11px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-850 pb-1.5 pl-0.5">Syllabus Breakdown</h4>
-                    <div className="space-y-3">
-                      {syllabus.map((syll) => (
-                        <div key={syll.week} className="flex gap-3 text-left">
-                          <span className="text-[11px] font-black text-amber-400 shrink-0 bg-amber-500/10 h-5 w-9 flex items-center justify-center rounded border border-amber-500/20">
-                            W{syll.week}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-white leading-tight break-words">{syll.title}</p>
-                            <p className="text-[11px] text-slate-450 mt-0.5 font-medium leading-relaxed break-words">{syll.details}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+      <Card className="h-full relative overflow-hidden border-slate-850 hover:border-slate-700/80 hover:-translate-y-1 hover:shadow-xl transition-all duration-300" variant="glass">
+        {/* COURSE BANNER — course-specific visual from the API (lazy, graceful
+            fallback to a category visual on missing/broken image) */}
+        <div className="relative shrink-0">
+          <CourseBanner
+            banner={banner || thumbnail || null}
+            alt={`${title} course banner`}
+            fallbackColor={color}
+            fallbackIcon={Icon}
+          />
+          {/* Featured / Coming Soon badges (never color-only) */}
+          {(featured || comingSoon) && (
+            <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+              {featured && <Badge variant="accent">Featured</Badge>}
+              {comingSoon && (
+                <Badge variant="warning" icon={<Hourglass size={12} />}>
+                  Coming Soon
+                </Badge>
+              )}
             </div>
           )}
         </div>
 
-        <div className="pt-6 mt-6 border-t border-slate-850/60 flex justify-end">
-          <button 
-            onClick={() => onAction?.(id)}
-            className="text-xs font-extrabold uppercase text-amber-450 hover:text-amber-300 transition-colors flex items-center gap-1"
-          >
-            Start Learning →
-          </button>
+        <div className="p-5 flex-1 flex flex-col space-y-3 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            {categoryName && (
+              <span className="text-[12px] font-bold text-slate-450 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-850/60 uppercase truncate">
+                {categoryName}
+              </span>
+            )}
+            <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wide shrink-0">
+              {difficulty || 'All Levels'}
+            </span>
+          </div>
+
+          <div className="space-y-1.5 min-w-0">
+            <h3 className="text-lg font-black text-white tracking-tight leading-snug">{title}</h3>
+            <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{desc}</p>
+          </div>
+
+          {(duration || moduleCount !== undefined || certificateAvailable || tags.length > 0) && (
+            <div className="flex flex-wrap gap-1.5">
+              {duration && (
+                <span className="text-[12px] font-bold text-slate-450 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-850/60 uppercase">⏱ {duration}</span>
+              )}
+              {moduleCount !== undefined && (
+                <span className="text-[12px] font-bold text-slate-450 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-850/60 uppercase">{moduleCount} Modules</span>
+              )}
+              {certificateAvailable && (
+                <span className="text-[12px] font-bold text-emerald-400/90 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">Certificate</span>
+              )}
+              {tags.map((tag) => (
+                <span key={tag} className="text-[12px] font-bold text-slate-450 bg-slate-900/50 px-2 py-0.5 rounded border border-slate-850/60 uppercase">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Price · Share · View Course */}
+          <div className="pt-4 mt-auto border-t border-slate-850/60 flex items-center justify-between gap-3">
+            {price !== undefined && price !== null ? (
+              <span className="text-base font-black font-mono text-amber-400">₹{price}</span>
+            ) : (
+              <span className="text-xs font-black uppercase tracking-wider text-slate-500">Free</span>
+            )}
+
+            <div className="flex items-center gap-2">
+              <CourseShareButton
+                courseTitle={title}
+                courseDescription={desc}
+                slug={slug}
+                id={id}
+              />
+              {comingSoon ? (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  title="This course is coming soon"
+                  className="inline-flex items-center gap-1.5 text-[12px] font-black uppercase tracking-wider px-3.5 py-2.5 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-500 cursor-not-allowed"
+                >
+                  <Hourglass size={12} /> Coming Soon
+                </button>
+              ) : (
+                <button
+                  onClick={() => onAction?.(slug || id)}
+                  className="text-xs font-extrabold uppercase text-amber-450 hover:text-amber-300 transition-colors flex items-center gap-1 min-h-[36px] px-2 rounded-lg hover:bg-amber-500/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+                >
+                  View Course <ArrowRight size={12} />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </Card>
     );
@@ -129,7 +173,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
   // Dashboard version
   return (
-    <Card 
+    <Card
       onClick={() => onAction?.(id)}
       hoverable
       className="group"
@@ -137,13 +181,15 @@ const CourseCard: React.FC<CourseCardProps> = ({
       {/* Top Half: Gradient Header Block */}
       <div className={`h-32 bg-gradient-to-br ${color} flex items-center justify-center relative`}>
         {Icon && <Icon size={48} className="text-white drop-shadow-md" />}
-        
+
         {/* Dynamic Status Badge overlay */}
         <div className="absolute top-3 right-3">
           {completed ? (
             <Badge variant="success">Completed</Badge>
           ) : progress > 0 ? (
-            <Badge variant="primary">Week {weekCompleted}/4</Badge>
+            <Badge variant="primary">
+              {totalWeeks ? `Week ${weekCompleted}/${totalWeeks}` : `Week ${weekCompleted}`}
+            </Badge>
           ) : (
             <Badge variant="neutral">Not Started</Badge>
           )}
@@ -163,12 +209,12 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
         {/* Course Progress Section */}
         <div className="space-y-2 pt-2 border-t border-slate-700/60">
-          <div className="flex justify-between items-center text-[11px] font-bold uppercase text-slate-400">
+          <div className="flex justify-between items-center text-[12px] font-bold uppercase text-slate-400">
             <span>Progress</span>
             <span className="text-slate-200">{progress}%</span>
           </div>
           <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
-            <div 
+            <div
               className={`h-full rounded-full ${barColor} transition-all duration-700`}
               style={{ width: `${progress}%` }}
             ></div>

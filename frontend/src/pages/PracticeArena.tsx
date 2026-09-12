@@ -6,6 +6,7 @@ import { Trophy, Timer, ChevronLeft, ChevronRight, CheckCircle2, XCircle, ArrowL
 import Skeleton from '../components/atoms/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { prefersReducedMotion } from '../lib/motion';
 import CodePlayground from '../components/molecules/CodePlayground';
 import PageContainer from '../components/layout/PageContainer';
 
@@ -54,6 +55,14 @@ const PracticeArena = () => {
   const navigate = useNavigate();
   const { confirmDialog, addToast } = useUI();
   const category = searchParams.get('category') || 'Programming';
+
+  // D1e: the coding playground ships C/C++/IoT templates for the programming
+  // categories only. New non-coding categories (e.g. Design) get the MCQ arena
+  // alone — coding mode would otherwise show an irrelevant template.
+  const isCodingCategory = category === 'Programming' || category === 'Electronics';
+  useEffect(() => {
+    if (!isCodingCategory && mode === 'coding') setMode('mcq');
+  }, [isCodingCategory, mode]);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -108,7 +117,9 @@ const PracticeArena = () => {
 
       setResults(res.data);
 
-      if (res.data.accuracy >= 65) {
+      // Decoration only — skipped under prefers-reduced-motion. The accuracy
+      // figure itself is rendered in the results panel either way.
+      if (res.data.accuracy >= 65 && !prefersReducedMotion()) {
         confetti({
           particleCount: 120,
           spread: 70,
@@ -327,7 +338,7 @@ const PracticeArena = () => {
       </div>
 
       <div className="text-center space-y-2">
-        <div className="inline-block bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-4 py-1 rounded-full text-emerald-600 dark:text-emerald-400 text-[11px] font-black uppercase tracking-widest mb-1">
+        <div className="inline-block bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-4 py-1 rounded-full text-emerald-600 dark:text-emerald-400 text-[12px] font-black uppercase tracking-widest mb-1">
           {category} Practice Arena
         </div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -342,7 +353,7 @@ const PracticeArena = () => {
       <div className="flex justify-center gap-4 bg-slate-100 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-900 p-2.5 rounded-2xl max-w-sm mx-auto">
         <button
           onClick={() => setMode('mcq')}
-          className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+          className={`flex-1 py-2 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all ${
             mode === 'mcq'
               ? 'bg-emerald-600 text-slate-950 shadow-md'
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -350,16 +361,18 @@ const PracticeArena = () => {
         >
           Adaptive Quiz Mode
         </button>
-        <button
-          onClick={() => setMode('coding')}
-          className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
-            mode === 'coding'
-              ? 'bg-emerald-600 text-slate-950 shadow-md'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          Interactive Coding Mode
-        </button>
+        {isCodingCategory && (
+          <button
+            onClick={() => setMode('coding')}
+            className={`flex-1 py-2 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all ${
+              mode === 'coding'
+                ? 'bg-emerald-600 text-slate-950 shadow-md'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Interactive Coding Mode
+          </button>
+        )}
       </div>
 
       <AnimatePresence mode="wait">
@@ -375,14 +388,14 @@ const PracticeArena = () => {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-850 pb-4">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Practice Coding Templates</h3>
-                  <p className="text-[11px] text-slate-500 mt-1">Select a track template and solve the inline debugging exercises.</p>
+                  <p className="text-[12px] text-slate-500 mt-1">Select a track template and solve the inline debugging exercises.</p>
                 </div>
                 <div className="flex gap-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 p-1 rounded-xl">
                   {(['C', 'C++', 'IoT'] as const).map((lang) => (
                     <button
                       key={lang}
                       onClick={() => setSelectedLang(lang)}
-                      className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-all ${
                         selectedLang === lang
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -395,7 +408,7 @@ const PracticeArena = () => {
               </div>
 
               <div className="p-4 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-2xl text-xs space-y-2">
-                <span className="text-[11px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">Exercise Description:</span>
+                <span className="text-[12px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">Exercise Description:</span>
                 {selectedLang === 'C' && (
                   <p className="text-slate-600 dark:text-slate-350 leading-relaxed font-medium">
                     <strong>C bitmasking control register:</strong> You need to set bit 0 and bit 3 of the control register
@@ -436,7 +449,7 @@ const PracticeArena = () => {
             <div className="lg:col-span-1 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 p-6 rounded-3xl space-y-6 self-start shadow-xl">
               <div>
                 <h3 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">Question Navigator</h3>
-                <p className="text-[11px] text-slate-500 mt-1">Jump to any question instantly.</p>
+                <p className="text-[12px] text-slate-500 mt-1">Jump to any question instantly.</p>
               </div>
 
               {/* M-046 — 44px touch targets (RB-18). flex-wrap (not a fixed
@@ -466,13 +479,13 @@ const PracticeArena = () => {
               </div>
 
               <div className="border-t border-slate-200 dark:border-slate-850 pt-4 space-y-2">
-                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500 dark:text-slate-400">
                   <div className="w-3 h-3 bg-emerald-500 rounded"></div> Current Question
                 </div>
-                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500 dark:text-slate-400">
                   <div className="w-3 h-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 rounded"></div> Solved Question
                 </div>
-                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500 dark:text-slate-400">
                   <div className="w-3 h-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded"></div> Unanswered
                 </div>
               </div>
@@ -482,10 +495,10 @@ const PracticeArena = () => {
             <div className="lg:col-span-3 space-y-6">
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-3xl p-6 md:p-8 shadow-xl space-y-6 relative overflow-hidden">
                 <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-850 pb-4">
-                  <span className="text-[11px] font-black uppercase text-slate-500 tracking-wider font-mono">
+                  <span className="text-[12px] font-black uppercase text-slate-500 tracking-wider font-mono">
                     Topic: {currentQuestion.topic}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider ${
+                  <span className={`px-2 py-0.5 rounded-full text-[12px] font-black uppercase tracking-wider ${
                     currentQuestion.difficulty === 'Easy'
                       ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/25'
                       : currentQuestion.difficulty === 'Medium'
@@ -650,14 +663,14 @@ const PracticeArena = () => {
                           <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-relaxed">
                             {idx + 1}. {item.text}
                           </h4>
-                          <span className="text-[11px] uppercase font-black tracking-widest text-slate-500 font-mono bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-850 px-2 py-0.5 rounded">
+                          <span className="text-[12px] uppercase font-black tracking-widest text-slate-500 font-mono bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-850 px-2 py-0.5 rounded">
                             Topic: {item.topic}
                           </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="p-4 bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-850 rounded-2xl space-y-1">
-                            <span className="text-[11px] font-black uppercase text-slate-500 block">Your Selected Answer</span>
+                            <span className="text-[12px] font-black uppercase text-slate-500 block">Your Selected Answer</span>
                             <span className={`text-xs font-medium ${item.isCorrect ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400'}`}>
                               {item.userAnswer || 'No Answer Submitted'}
                             </span>
@@ -665,7 +678,7 @@ const PracticeArena = () => {
 
                           {!item.isCorrect && (
                             <div className="p-4 bg-slate-50 dark:bg-slate-950/50 border border-emerald-200 dark:border-emerald-950/30 rounded-2xl space-y-1">
-                              <span className="text-[11px] font-black uppercase text-emerald-600 dark:text-emerald-400 block">Correct Conceptual Answer</span>
+                              <span className="text-[12px] font-black uppercase text-emerald-600 dark:text-emerald-400 block">Correct Conceptual Answer</span>
                               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{item.correctAnswer}</span>
                             </div>
                           )}
@@ -673,7 +686,7 @@ const PracticeArena = () => {
 
                         {item.explanation && (
                           <div className="p-4 bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-850 rounded-2xl space-y-2">
-                            <span className="text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">Conceptual Explanation</span>
+                            <span className="text-[12px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">Conceptual Explanation</span>
                             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">{item.explanation}</p>
                           </div>
                         )}

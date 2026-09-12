@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authenticateToken } from '../middleware/auth';
+import { requireEnrollment } from '../services/enrollmentService';
 import { rateLimiter } from '../middleware/rateLimiter';
 import { logger } from '../lib/logger';
 import {
@@ -13,8 +14,10 @@ import { runChallengeTests } from '../services/challengeRunnerService';
 const router = Router();
 
 // GET /api/challenges/course/:courseId - ordered challenges grouped by module, with completion flags
+// TASK 4: ACTIVE enrollment required (challenge content is course learning material).
 router.get('/course/:courseId', authenticateToken, async (req: any, res: Response, next: NextFunction) => {
   try {
+    if (!(await requireEnrollment(req, res, req.params.courseId as string))) return;
     const data = await getCourseChallenges(req.params.courseId as string, req.user.id);
     res.json(data);
   } catch (error) {
@@ -33,10 +36,12 @@ router.get('/counts', authenticateToken, async (req: any, res: Response, next: N
 });
 
 // GET /api/challenges/:id - single challenge (solutionCode excluded)
+// TASK 4: challenge resolved server-side → owning course → ACTIVE enrollment required.
 router.get('/:id', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseInt(req.params.id as string, 10);
     const data = await getChallenge(id);
+    if (!(await requireEnrollment(req, res, data.courseId))) return;
     res.json(data);
   } catch (error) {
     next(error);
@@ -54,6 +59,7 @@ router.post('/:id/run-test', authenticateToken, rateLimiter(15, 60_000), async (
     }
 
     const challenge = await getChallenge(id); // excludes solutionCode
+    if (!(await requireEnrollment(req, res, challenge.courseId))) return;
     const outcome = await runChallengeTests(
       { challengeType: challenge.challengeType, seedCode: challenge.seedCode, testCode: challenge.testCode },
       code
@@ -79,6 +85,7 @@ router.post('/:id/complete', authenticateToken, async (req: any, res: Response, 
   try {
     const id = parseInt(req.params.id as string, 10);
     const challenge = await getChallenge(id);
+    if (!(await requireEnrollment(req, res, challenge.courseId))) return;
 
     // SECURITY (#100): server-graded challenges (non-empty assertion testCode)
     // must be completed through /run-test, which records ONLY when every test

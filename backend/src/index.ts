@@ -2,7 +2,9 @@
 // process.env at import time (SECURITY #65 — required secrets must be present).
 import './lib/env';
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
+import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import prisma from './lib/prisma';
 import { logger } from './lib/logger';
@@ -10,6 +12,13 @@ import authRoutes from './routes/auth';
 import courseRoutes from './routes/course';
 import quizRoutes from './routes/quiz';
 import certificateRoutes from './routes/certificate';
+// Two distinct internship surfaces share this file after the merge:
+//  - /api/internships        → the Internship Management console (records +
+//                              certificate issuance), imported as `internshipRoutes`
+//  - /api/internship         → the programme catalogue + application workflow
+//                              (browse → apply → admin review)
+// They are separate features with separate models, so they keep separate
+// imports rather than being folded into one router.
 import internshipRoutes from './routes/internships';
 import paymentRoutes from './routes/payment';
 import practiceRoutes from './routes/practice';
@@ -19,6 +28,9 @@ import projectRoutes from './routes/project';
 import contactRoutes from './routes/contact';
 import challengeRoutes from './routes/challenge';
 import sandboxRoutes from './routes/sandbox';
+import statsRoutes from './routes/stats';
+import internshipProgramRoutes from './routes/internship';
+import internshipAdminRoutes from './routes/internshipAdmin';
 import { errorHandler } from './middleware/errorHandler';
 
 // Required-secret validation now happens inside getRequiredEnv() at import time
@@ -31,6 +43,32 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Behind nginx, `req.ip` is the proxy's address unless Express is told how many
+// hops to trust. Without this every visitor shares one rate-limit bucket, so a
+// handful of bad logins from anyone locks out everyone — and no attacker is
+// actually throttled. 1 = the single nginx hop in front of the app container.
+app.set('trust proxy', 1);
+
+// Security headers. The frontend keeps its JWT in localStorage, so a script
+// injection is a token-theft path — the CSP is the backstop, not decoration.
+// `crossOriginResourcePolicy` is relaxed because course banners are served from
+// /static and consumed by the separate frontend origin.
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // Tailwind injects inline styles
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'self'"],
+    },
+  },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 app.use(cookieParser());
 
@@ -61,6 +99,12 @@ app.use(cors({
 // submissions legitimately exceed 10kb and were being rejected with a bare 413.
 app.use(express.json({ limit: '1mb' }));
 
+// TASK 6: static course-banner assets. Banner URLs are stored in the DB
+// (`Course.banner`) and served from /static — the API stays the single source
+// of truth for which banner belongs to which course. SVGs are ~1–4 KB each,
+// resolution-independent, and need no external host.
+app.use('/static', express.static(path.join(__dirname, '../public')));
+
 // NOTE: No global CSRF middleware. Auth is JWT Bearer via the Authorization
 // header (not a browser-auto-sent cookie), so classic cross-site request
 // forgery does not apply — a cookie is never present on the wire. The previous
@@ -80,6 +124,9 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/sandbox', sandboxRoutes);
+app.use('/api/stats', statsRoutes);
+app.use('/api/internship', internshipProgramRoutes);
+app.use('/api/internship/admin', internshipAdminRoutes);
 
 // Health Check Instrumentation Endpoint
 app.get('/health', async (req, res) => {

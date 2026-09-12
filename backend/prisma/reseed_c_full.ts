@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
-import { cSections, cFinalExam } from './content/c';
+import { cSections } from './content/c';
 import { cTopicQuizzes } from './content/c_topic_quizzes';
 
 dotenv.config();
@@ -132,25 +132,11 @@ async function main() {
     );
   }
 
-  // Replace the final exam: 50 near-identical templates → 15 distinct questions.
-  const oldExam = await prisma.finalExamQuestion.deleteMany({ where: { courseId: COURSE_ID } });
-  for (const q of cFinalExam) {
-    await prisma.finalExamQuestion.create({
-      data: {
-        courseId: COURSE_ID,
-        text: q.text,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-      },
-    });
-  }
-
   console.log(`\n--- C RE-SEED COMPLETE ---`);
   console.log(`Modules rebuilt:   ${cSections.length}`);
   console.log(`Topics created:    ${totalTopics}`);
   console.log(`Topic quizzes:     ${totalTopicQuizzes} (per-topic, topic-lock flow)`);
   console.log(`Chapter quizzes:   ${totalChapterQuizzes} (module-level)`);
-  console.log(`Final exam:        replaced ${oldExam.count} template questions → ${cFinalExam.length} distinct`);
 }
 
 main()

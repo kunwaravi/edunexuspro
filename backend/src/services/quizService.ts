@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma';
-import { notFoundTo404 } from '../middleware/errorHandler';
+import { AppError, notFoundTo404 } from '../middleware/errorHandler';
 
 export const getQuizQuestions = async (courseId: string, week: number) => {
   const moduleRecord = await prisma.module.findFirst({
@@ -25,12 +25,25 @@ export const getQuizQuestions = async (courseId: string, week: number) => {
   };
 };
 
+// Questions a topic quiz serves — and therefore the size of the graded set.
+const TOPIC_QUIZ_SIZE = 5;
+
 export const submitQuiz = async (userId: number, courseId: string, week: number, answers: Record<number, string>, topicId?: number) => {
   const questionIds = Object.keys(answers).map(id => parseInt(id));
   if (questionIds.length === 0) return null;
 
+  // The claimed week must resolve to a real module of this course: progress is
+  // written against that module, so an unknown week is a 404, never an upsert.
+  const moduleRecord = await prisma.module.findFirst({
+    where: { courseId, week },
+    include: { _count: { select: { quizQuestions: true } } }
+  });
+
+  if (!moduleRecord) return null;
+
   // Use the course's real module count instead of a hardcoded 20 (issue #70).
-  // CADDED courses have 5 weeks — a fixed /20 made them stuck at 25%.
+  // A fixed /20 left short courses stuck at 25% (CADDED originally had 5 weeks;
+  // both CADDED reseeds now run the full 20-week curriculum like any other course).
   const totalModules = await prisma.module.count({ where: { courseId } });
   const requiredWeeks = totalModules > 0 ? totalModules : 20;
 
@@ -39,14 +52,58 @@ export const submitQuiz = async (userId: number, courseId: string, week: number,
       id: { in: questionIds }
     },
     include: {
-      topic: { select: { id: true, title: true } }
+      topic: { select: { id: true, title: true } },
+      module: { select: { courseId: true } }
     }
   });
 
   if (questions.length === 0) return null;
 
+  // SECURITY (TASK 4 §J): ownership chain — every submitted question id must
+  // resolve AND belong to a module of `courseId`. A user enrolled in C cannot
+  // submit C++ questions (or a mixed bank) against courseId=C.
+  const allResolved = questions.length === questionIds.length;
+  const allOwnedByCourse = questions.every((q) => q.module.courseId === courseId);
+  if (!allResolved || !allOwnedByCourse) {
+    throw new AppError('Quiz submission contains questions that do not belong to this course.', 403);
+  }
+
+  // SECURITY: grade the quiz that was served, not the subset the client chose to
+  // send. `totalQuestions` used to be answers.length, so one correct answer
+  // scored 100 and passed the module (which then advanced ModuleProgress,
+  // CourseProgress and every downstream gate). Unanswered questions now count as
+  // wrong, matching what the quiz UI tells the student.
+  let totalQuestions: number;
+
+  if (topicId !== undefined) {
+    // topicId must also belong to courseId and this week's module.
+    const topicOwnership = await prisma.topic.findUnique({
+      where: { id: topicId },
+      include: {
+        module: { select: { courseId: true, week: true } },
+        _count: { select: { quizQuestions: true } }
+      }
+    });
+    if (!topicOwnership || topicOwnership.module.courseId !== courseId || topicOwnership.module.week !== week) {
+      throw new AppError('Topic does not belong to this course/week.', 403);
+    }
+    if (!questions.every((q) => q.topicId === topicId)) {
+      throw new AppError('Quiz submission contains questions that do not belong to this topic.', 403);
+    }
+    totalQuestions = Math.min(TOPIC_QUIZ_SIZE, topicOwnership._count.quizQuestions);
+  } else {
+    // A question from another week of the same course must not mark THIS week
+    // complete (the course-level check above is not a module-level check).
+    if (!questions.every((q) => q.moduleId === moduleRecord.id)) {
+      throw new AppError('Quiz submission contains questions that do not belong to this week.', 403);
+    }
+    totalQuestions = moduleRecord._count.quizQuestions;
+  }
+
+  // A submission must never be able to shrink its own denominator to zero.
+  if (totalQuestions < 1) return null;
+
   let correctCount = 0;
-  const totalQuestions = questions.length;
   const breakdown = questions.map(q => {
     const userAnswer = answers[q.id];
     const isCorrect = userAnswer === q.correctAnswer;
@@ -63,7 +120,9 @@ export const submitQuiz = async (userId: number, courseId: string, week: number,
     };
   });
 
-  const score = Math.round((correctCount / totalQuestions) * 100);
+  // Capped at 100: a topic quiz may legitimately be answered with more questions
+  // than the sample it served, which would otherwise report >100%.
+  const score = Math.min(100, Math.round((correctCount / totalQuestions) * 100));
   const passed = score >= 60;
 
   const result = await prisma.quizResult.create({
@@ -214,14 +273,8 @@ export const submitQuiz = async (userId: number, courseId: string, week: number,
         }
       }
     } else {
-      // Standard Module-level progress update (e.g. CADDED)
-      const moduleRecord = await prisma.module.findFirst({
-        where: {
-          courseId,
-          week
-        }
-      });
-
+      // Standard Module-level progress update (e.g. CADDED) — moduleRecord was
+      // already resolved and validated against the claimed week above.
       if (moduleRecord) {
         await prisma.moduleProgress.upsert({
           where: {
@@ -333,9 +386,10 @@ export const getTopicQuizQuestions = async (topicId: number) => {
 
   if (questions.length === 0) return null;
 
-  // Shuffle and take 5 random questions to create a dynamic/randomized question bank experience
+  // Shuffle and take TOPIC_QUIZ_SIZE random questions to create a dynamic/randomized
+  // question bank experience. The same constant is the graded denominator in submitQuiz.
   const shuffled = [...questions].sort(() => 0.5 - Math.random());
-  const selected = shuffled.slice(0, 5);
+  const selected = shuffled.slice(0, TOPIC_QUIZ_SIZE);
 
   const safeQuestions = selected.map(({ correctAnswer, ...q }) => ({
     ...q

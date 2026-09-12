@@ -33,12 +33,6 @@ export interface SqlSection {
   quizzes: SqlQuiz[];
 }
 
-export interface SqlFinalExamQuestion {
-  text: string;
-  options: string[];
-  correctAnswer: string;
-}
-
 export const sqlSections: SqlSection[] = [
   // ──────────────────────────────────────────────────────────────────────────
   // SECTION 1 — Introduction to Databases
@@ -921,25 +915,3 @@ export const sqlSections: SqlSection[] = [
     ],
   },
 ];
-
-export const sqlFinalExam: SqlFinalExamQuestion[] = [
-  { text: "Which set of guarantees makes databases safe for money transfers?", options: ["CRUD", "ACID (Atomicity, Consistency, Isolation, Durability)", "SQL", "DDL"], correctAnswer: "ACID (Atomicity, Consistency, Isolation, Durability)" },
-  { text: "A table that stores a comma-separated list in one column violates…", options: ["3NF", "1NF (no atomic values)", "ACID", "the primary key rule"], correctAnswer: "1NF (no atomic values)" },
-  { text: "Which operator tests whether a value is present in a list?", options: ["IN", "IS", "LIKE", "AS"], correctAnswer: "IN" },
-  { text: "WHERE filters rows before grouping; HAVING filters…", options: ["rows after ORDER BY", "whole groups after aggregation", "columns in SELECT", "the primary key"], correctAnswer: "whole groups after aggregation" },
-  { text: "Which join keeps every row from the left table with NULLs for missing matches?", options: ["INNER JOIN", "LEFT JOIN", "CROSS JOIN", "FULL SELF JOIN"], correctAnswer: "LEFT JOIN" },
-  { text: "Why does a correlated subquery tend to slow down as the outer table grows?", options: ["It sorts the whole table", "It re-runs the inner query once per outer row", "It creates new indexes", "It locks every row"], correctAnswer: "It re-runs the inner query once per outer row" },
-  { text: "To find customers with no orders, use LEFT JOIN and check…", options: ["customer.name IS NULL", "order.id IS NULL", "COUNT(*) = 0", "order.total = 0"], correctAnswer: "order.id IS NULL" },
-  { text: "Money should be stored as…", options: ["FLOAT", "NUMERIC or integer cents", "TEXT", "BOOLEAN"], correctAnswer: "NUMERIC or integer cents" },
-  { text: "A partial dependency (a column depending on part of a composite key) violates…", options: ["1NF", "2NF", "3NF", "BCNF"], correctAnswer: "2NF" },
-  { text: "Which command removes all rows instantly and cannot filter?", options: ["DELETE FROM … WHERE", "TRUNCATE", "DROP COLUMN", "ALTER"], correctAnswer: "TRUNCATE" },
-  { text: "PostgreSQL's upsert is written with…", options: ["REPLACE INTO", "ON CONFLICT", "INSERT OR IGNORE", "MERGE ALL"], correctAnswer: "ON CONFLICT" },
-  { text: "A normal index is not used by `WHERE LOWER(email) = …` because…", options: ["the function hides the column from the index", "emails are too short", "LOWER is banned", "indexes only work on integers"], correctAnswer: "the function hides the column from the index" },
-  { text: "A daily revenue dashboard reads a precomputed aggregate. What is that pattern called?", options: ["a live view", "a materialized view (refreshed on a schedule)", "an index", "a trigger"], correctAnswer: "a materialized view (refreshed on a schedule)" },
-  { text: "The single most important SQL injection defense is…", options: ["escaping quotes", "parameterized queries — never concatenating user input into SQL", "renaming tables", "using OR instead of AND"], correctAnswer: "parameterized queries — never concatenating user input into SQL" },
-  { text: "Audit logging 'who changed what' automatically on writes is best done with…", options: ["a view", "a trigger that writes to an audit table", "an index", "a CHECK constraint"], correctAnswer: "a trigger that writes to an audit table" },
-  { text: "`BEGIN; … COMMIT;` groups statements so they…", options: ["run in parallel", "all succeed or all roll back", "skip failures", "run twice"], correctAnswer: "all succeed or all roll back" },
-  { text: "Before adding an index, you should…", options: ["index every column", "find the queries that actually take the most time (pg_stat_statements)", "buy faster hardware", "rewrite all queries"], correctAnswer: "find the queries that actually take the most time (pg_stat_statements)" },
-  { text: "A fresh DB → migrations → seed → queries that just work means the schema is…", options: ["complex", "reproducible", "cached", "denormalized"], correctAnswer: "reproducible" },
-];
-

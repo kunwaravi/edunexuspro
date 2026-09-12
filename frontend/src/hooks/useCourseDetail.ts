@@ -13,8 +13,20 @@ export const useCourseDetail = (courseId: string | undefined) => {
   const [isPaid, setIsPaid] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // TASK 4: set when the server rejects the premium module fetch with 403 —
+  // the user is authenticated but has no ACTIVE enrollment for this course.
+  // Access authority is the backend response, never localStorage/frontend state.
+  const [moduleAccessDenied, setModuleAccessDenied] = useState(false);
 
-  const progressInfo = user?.progresses?.find((p: any) => p.courseId === courseId);
+  // Canonical Course.id resolved from the route param, which may be a slug
+  // ("/course/c") or a legacy id ("/course/C"). All downstream lookups
+  // (progress, payments, module fetch, quiz/forum links) MUST use resolvedId,
+  // never the raw param.
+  const [resolvedId, setResolvedId] = useState<string | null>(null);
+
+  const progressInfo = resolvedId
+    ? user?.progresses?.find((p: any) => p.courseId === resolvedId)
+    : undefined;
   const currentWeek = progressInfo?.weekCompleted || 0;
 
   // Mirror progress into a ref so the syllabus fetch depends only on courseId.
@@ -32,16 +44,24 @@ export const useCourseDetail = (courseId: string | undefined) => {
     setError(null);
     try {
       const res = await api.get('/courses');
-      // Find the specific course in the returned array
-      const matchedCourse = res.data.find((c: any) => c.id === courseId);
+      // Find the specific course by id OR slug
+      const matchedCourse = res.data.find((c: any) => c.id === courseId || c.slug === courseId);
+      const canonicalId = matchedCourse?.id || courseId;
+      setResolvedId(canonicalId);
       setCourse(matchedCourse);
       const courseWeeks = matchedCourse?.modules || [];
       setWeeks(courseWeeks);
 
-      const savedIndex = localStorage.getItem(`last_viewed_week_${courseId}`);
+      // Resolve progress against the canonical id (works for slug URLs too).
+      // NOTE: intentionally reads `user` here WITHOUT putting it in deps — a
+      // user refresh mid-session must not re-run this fetch (M-048).
+      const resolvedProgress = user?.progresses?.find((p: any) => p.courseId === canonicalId);
+      const resolvedWeek = resolvedProgress?.weekCompleted || 0;
+
+      const savedIndex = localStorage.getItem(`last_viewed_week_${canonicalId}`);
       const activeIndex = savedIndex !== null
         ? Math.min(parseInt(savedIndex, 10), Math.max(0, courseWeeks.length - 1))
-        : Math.min(currentWeekRef.current, Math.max(0, courseWeeks.length - 1));
+        : Math.min(resolvedWeek, Math.max(0, courseWeeks.length - 1));
       setActiveWeekIndex(activeIndex);
     } catch (err: any) {
       console.error('Failed to fetch course syllabus:', err);
@@ -49,42 +69,52 @@ export const useCourseDetail = (courseId: string | undefined) => {
     } finally {
       setLoadingSyllabus(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   const fetchPaymentStatus = useCallback(async () => {
-    if (!courseId || !user) return;
+    if (!resolvedId || !user) return;
     setCheckingPayment(true);
     try {
-      const res = await api.get(`/payments/status/${courseId}`);
+      const res = await api.get(`/payments/status/${resolvedId}`);
       setIsPaid(res.data.paid);
     } catch (err) {
       console.error('Failed to fetch payment status:', err);
     } finally {
       setCheckingPayment(false);
     }
-  }, [courseId, user]);
+  }, [resolvedId, user]);
 
   // Abort any in-flight module request when the active week changes so a stale
   // response can never overwrite the current week's content (M-048 race fix).
   const moduleAbortRef = useRef<AbortController | null>(null);
 
   const fetchModuleDetails = useCallback(async () => {
-    if (!courseId || weeks.length === 0) return;
+    if (!resolvedId || weeks.length === 0) return;
     moduleAbortRef.current?.abort();
     const controller = new AbortController();
     moduleAbortRef.current = controller;
     setLoadingDetails(true);
     try {
       const activeWeekNum = weeks[activeWeekIndex]?.week || (activeWeekIndex + 1);
-      const res = await api.get(`/courses/${courseId}/module/${activeWeekNum}`, {
+      const res = await api.get(`/courses/${resolvedId}/module/${activeWeekNum}`, {
         signal: controller.signal
       });
       setActiveModuleDetail(res.data);
+      setModuleAccessDenied(false);
     } catch (err: any) {
       // Superseded by a newer request (or unmount) — ignore; a fallback here
       // would show the wrong week's content.
       if (err?.name === 'AbortError' || err?.code === 'ERR_CANCELED') return;
       console.error('Lazy loading module failed, utilizing fallback dataset:', err);
+      if (err?.response?.status === 403) {
+        // Server is the authorization authority: authenticated but not enrolled.
+        // Keep the public syllabus outline (module title/description only — no
+        // topic text/code leaks) and flag the access-required state.
+        setModuleAccessDenied(true);
+        return;
+      }
+      setModuleAccessDenied(false);
       setActiveModuleDetail(weeks[activeWeekIndex]);
     } finally {
       // Only the latest controller is allowed to clear the loading flag.
@@ -92,7 +122,7 @@ export const useCourseDetail = (courseId: string | undefined) => {
         setLoadingDetails(false);
       }
     }
-  }, [courseId, weeks, activeWeekIndex]);
+  }, [resolvedId, weeks, activeWeekIndex]);
 
   useEffect(() => {
     fetchSyllabus();
@@ -115,8 +145,8 @@ export const useCourseDetail = (courseId: string | undefined) => {
 
   const setPersistedActiveWeekIndex = (index: number) => {
     setActiveWeekIndex(index);
-    if (courseId) {
-      localStorage.setItem(`last_viewed_week_${courseId}`, index.toString());
+    if (resolvedId) {
+      localStorage.setItem(`last_viewed_week_${resolvedId}`, index.toString());
     }
   };
 
@@ -131,7 +161,10 @@ export const useCourseDetail = (courseId: string | undefined) => {
     isPaid,
     checkingPayment,
     currentWeek,
+    // Canonical Course.id for callers that hit id-keyed endpoints.
+    courseId: resolvedId,
     error,
+    moduleAccessDenied,
     refetchSyllabus: fetchSyllabus,
     refreshPaymentStatus
   };

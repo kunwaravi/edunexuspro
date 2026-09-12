@@ -16,7 +16,9 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
       return res.status(401).json({ message: 'Access token missing' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    // Pin the algorithm: without an allowlist, a token signed with a different
+    // algorithm is accepted as long as it verifies against this secret.
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as any;
     const user = await getUserById(decoded.userId);
 
     req.user = user;

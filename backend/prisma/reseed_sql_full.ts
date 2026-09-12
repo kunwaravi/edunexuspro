@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
-import { sqlSections, sqlFinalExam } from './content/sql';
+import { sqlSections } from './content/sql';
 import { sqlTopicQuizzes } from './content/sql_topic_quizzes';
 
 dotenv.config();
@@ -133,25 +133,11 @@ async function main() {
     );
   }
 
-  // Replace the final exam: near-identical templates → distinct questions.
-  const oldExam = await prisma.finalExamQuestion.deleteMany({ where: { courseId: COURSE_ID } });
-  for (const q of sqlFinalExam) {
-    await prisma.finalExamQuestion.create({
-      data: {
-        courseId: COURSE_ID,
-        text: q.text,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-      },
-    });
-  }
-
   console.log(`\n--- SQL RE-SEED COMPLETE ---`);
   console.log(`Modules rebuilt:   ${sqlSections.length}`);
   console.log(`Topics created:    ${totalTopics}`);
   console.log(`Topic quizzes:     ${totalTopicQuizzes} (per-topic, topic-lock flow)`);
   console.log(`Chapter quizzes:   ${totalChapterQuizzes} (module-level)`);
-  console.log(`Final exam:        replaced ${oldExam.count} template questions → ${sqlFinalExam.length} distinct`);
 }
 
 main()

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronRight, Home, Map as MapIcon, List } from 'lucide-react';
+import { ChevronRight, Home, Map as MapIcon, List, Code2, Target } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ProgressMap from './ProgressMap';
 
 interface Week {
@@ -16,6 +17,13 @@ interface SyllabusManagerProps {
   onWeekChange?: () => void;
   viewState?: 'course-home' | 'module-home' | 'topic-reader';
   setViewState?: (state: 'course-home' | 'module-home' | 'topic-reader') => void;
+  // D3: per-course interactive-challenge counts drive the sidebar "Challenges" entry.
+  courseId?: string;
+  challengeTotal?: number;
+  challengeCompleted?: number;
+  // D1e: per-course practice-arena category — the sidebar "Practice" entry is
+  // shown only when the course has a seeded practice set (CADD & BIM → 'Design').
+  practiceCategory?: string;
 }
 
 const SyllabusManager: React.FC<SyllabusManagerProps> = ({
@@ -26,7 +34,11 @@ const SyllabusManager: React.FC<SyllabusManagerProps> = ({
   completedPercentage,
   onWeekChange,
   viewState = 'course-home',
-  setViewState
+  setViewState,
+  courseId,
+  challengeTotal = 0,
+  challengeCompleted = 0,
+  practiceCategory
 }) => {
   const [showMap, setShowMap] = useState(false);
   const radius = 20;
@@ -34,7 +46,7 @@ const SyllabusManager: React.FC<SyllabusManagerProps> = ({
   const strokeDashoffset = circumference - (completedPercentage / 100) * circumference;
 
   return (
-    <div className="w-full lg:w-1/3 bg-slate-900/40 border border-slate-800 rounded-2xl p-4 space-y-3.5 shrink-0">
+    <div className="w-full bg-slate-900/40 border border-slate-800 rounded-2xl p-4 space-y-3.5">
       <h2 className="text-lg font-extrabold tracking-tight px-2 pb-2 border-b border-slate-800 text-white">Course Chapters</h2>
       
       {/* Circular Progress Widget in Sidebar */}
@@ -63,11 +75,11 @@ const SyllabusManager: React.FC<SyllabusManagerProps> = ({
               fill="transparent"
             />
           </svg>
-          <span className="absolute text-[11px] font-black text-white">{completedPercentage}%</span>
+          <span className="absolute text-[12px] font-black text-white">{completedPercentage}%</span>
         </div>
         <div>
           <h3 className="text-xs font-black text-slate-100 uppercase tracking-wider">Track Progress</h3>
-          <p className="text-[11px] font-bold text-slate-400 uppercase mt-0.5">{currentWeek} of {weeks.length} Chapters Completed</p>
+          <p className="text-[12px] font-bold text-slate-400 uppercase mt-0.5">{currentWeek} of {weeks.length} Chapters Completed</p>
         </div>
       </div>
       
@@ -75,7 +87,7 @@ const SyllabusManager: React.FC<SyllabusManagerProps> = ({
       <div className="flex rounded-lg border border-slate-800 overflow-hidden">
         <button
           onClick={() => setShowMap(false)}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-black uppercase tracking-widest transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[12px] font-black uppercase tracking-widest transition-colors ${
             !showMap ? 'bg-cyan-500/15 text-cyan-400' : 'bg-slate-900/40 text-slate-500 hover:text-slate-300'
           }`}
         >
@@ -83,7 +95,7 @@ const SyllabusManager: React.FC<SyllabusManagerProps> = ({
         </button>
         <button
           onClick={() => setShowMap(true)}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[11px] font-black uppercase tracking-widest transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[12px] font-black uppercase tracking-widest transition-colors ${
             showMap ? 'bg-cyan-500/15 text-cyan-400' : 'bg-slate-900/40 text-slate-500 hover:text-slate-300'
           }`}
         >
@@ -136,6 +148,48 @@ const SyllabusManager: React.FC<SyllabusManagerProps> = ({
           <ChevronRight size={16} className="text-slate-500 group-hover:translate-x-0.5 transition-transform" />
         </button>
 
+        {/* D3: Interactive Challenges entry — shown only for courses that have
+            challenge content (avoids a dead-end link on the other 6 tracks). */}
+        {courseId && challengeTotal > 0 && (
+          <Link
+            to={`/course/${courseId}/challenges`}
+            className="w-full text-left p-3.5 rounded-xl border flex items-center justify-between transition-all duration-200 group cursor-pointer bg-slate-800/40 border-slate-700/50 text-slate-300 hover:bg-slate-800 hover:border-slate-600"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg transition-colors bg-emerald-500/15 text-emerald-400">
+                <Code2 size={18} />
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Challenges</p>
+                <h4 className="text-sm font-bold">
+                  {challengeCompleted}/{challengeTotal} completed
+                </h4>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-500 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        )}
+
+        {/* D1e: Practice Arena entry — shown only for courses that have a
+            seeded practice category (avoids a dead-end link on other tracks). */}
+        {courseId && practiceCategory && (
+          <Link
+            to={`/practice/arena?category=${practiceCategory}`}
+            className="w-full text-left p-3.5 rounded-xl border flex items-center justify-between transition-all duration-200 group cursor-pointer bg-slate-800/40 border-slate-700/50 text-slate-300 hover:bg-slate-800 hover:border-slate-600"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg transition-colors bg-sky-500/15 text-sky-400">
+                <Target size={18} />
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Practice</p>
+                <h4 className="text-sm font-bold">{practiceCategory} Practice Arena</h4>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-slate-500 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        )}
+
         {weeks.map((week, index) => {
           const isUnlocked = index <= currentWeek;
           const isCompleted = index < currentWeek;
@@ -162,7 +216,7 @@ const SyllabusManager: React.FC<SyllabusManagerProps> = ({
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 {/* Circular state badge (#79, showcase §03) */}
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 transition-colors ${
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-black shrink-0 transition-colors ${
                   isCompleted
                     ? 'bg-emerald-500/15 border border-emerald-500 text-emerald-400'
                     : isUnlocked
@@ -172,11 +226,11 @@ const SyllabusManager: React.FC<SyllabusManagerProps> = ({
                   {isCompleted ? '✓' : isUnlocked ? week.week : '🔒'}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Chapter {week.week}</p>
-                  <h4 className="text-sm font-bold truncate">{week.title}</h4>
+                  <p className="text-[12px] text-slate-400 font-bold uppercase tracking-wider">Chapter {week.week}</p>
+                  <h4 className="text-sm font-bold leading-snug break-words md:truncate">{week.title}</h4>
                 </div>
               </div>
-              {isUnlocked && <ChevronRight size={16} className="text-slate-500 group-hover:translate-x-0.5 transition-transform" />}
+              {isUnlocked && <ChevronRight size={16} className="shrink-0 text-slate-500 group-hover:translate-x-0.5 transition-transform" />}
             </button>
           );
         })}

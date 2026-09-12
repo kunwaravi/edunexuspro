@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
 import { ThemeProvider } from './context/ThemeContext';
 import React, { Suspense } from 'react';
+import { MotionConfig } from 'framer-motion';
 import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -16,15 +17,23 @@ const Certificate = React.lazy(() => import('./pages/Certificate'));
 const InternshipCertificate = React.lazy(() => import('./pages/InternshipCertificate'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const PracticeArena = React.lazy(() => import('./pages/PracticeArena'));
+const ChallengeListPage = React.lazy(() => import('./pages/ChallengeListPage'));
+const ChallengeRunnerPage = React.lazy(() => import('./pages/ChallengeRunnerPage'));
 const PayPage = React.lazy(() => import('./pages/PayPage'));
 const Terms = React.lazy(() => import('./pages/Terms'));
 const Privacy = React.lazy(() => import('./pages/Privacy'));
 const Refund = React.lazy(() => import('./pages/Refund'));
 const About = React.lazy(() => import('./pages/About'));
 const Contact = React.lazy(() => import('./pages/Contact'));
+const Internship = React.lazy(() => import('./pages/Internship'));
+const InternshipProgramDetail = React.lazy(() => import('./pages/InternshipProgramDetail'));
+const InternshipApply = React.lazy(() => import('./pages/InternshipApply'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
+const CoursesPage = React.lazy(() => import('./pages/CoursesPage'));
 import Navbar from './components/Navbar';
 import FloatingSupportWidget from './components/atoms/FloatingSupportWidget';
+import BackToTop from './components/atoms/BackToTop';
+import GoogleReviewCta from './components/atoms/GoogleReviewCta';
 import ErrorBoundary from './components/atoms/ErrorBoundary';
 import './App.css';
 
@@ -44,9 +53,10 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
 function AppRoutes() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-white">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-white overflow-x-clip">
       <Navbar />
       <FloatingSupportWidget />
+      <BackToTop />
       {/* Shell wrapper — vertical rhythm only (py-8). Each page owns its own
           PageContainer (horizontal padding + max-width) so nothing is nested. */}
       <div className="container mx-auto py-8 flex-grow w-full">
@@ -58,6 +68,9 @@ function AppRoutes() {
         }>
           <Routes>
             <Route path="/" element={<Home />} />
+            {/* TASK 5: full public catalog page (View All → /courses). Public —
+                no enrollment/auth — per spec §N. */}
+            <Route path="/courses" element={<CoursesPage />} />
             <Route path="/login" element={<LoginPage mode="login" />} />
             <Route path="/register" element={<LoginPage mode="register" />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -66,6 +79,8 @@ function AppRoutes() {
             <Route path="/quiz/:courseId/:week" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
             <Route path="/quiz/:courseId/:week/:topicId" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
             <Route path="/practice/arena" element={<ProtectedRoute><PracticeArena /></ProtectedRoute>} />
+            <Route path="/course/:id/challenges" element={<ProtectedRoute><ChallengeListPage /></ProtectedRoute>} />
+            <Route path="/challenges/:challengeId" element={<ProtectedRoute><ChallengeRunnerPage /></ProtectedRoute>} />
             <Route path="/pay/:courseId" element={<ProtectedRoute><PayPage /></ProtectedRoute>} />
             <Route path="/certificate" element={<ProtectedRoute><Certificate /></ProtectedRoute>} />
             <Route path="/internship-certificate" element={<ProtectedRoute><InternshipCertificate /></ProtectedRoute>} />
@@ -77,6 +92,12 @@ function AppRoutes() {
             <Route path="/refund" element={<Refund />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/internship" element={<Internship />} />
+            {/* Internship application flow (M-0XX): the catalog stays public,
+                a program detail is linkable, and only the application form
+                itself is auth-gated. */}
+            <Route path="/internship/:slug" element={<InternshipProgramDetail />} />
+            <Route path="/internship/:slug/apply" element={<ProtectedRoute><InternshipApply /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -88,9 +109,16 @@ function AppRoutes() {
         <div className="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500 font-medium">
           <div className="flex flex-col gap-1 text-center sm:text-left">
             <p className="text-slate-400">© 2026 Edunexus Automation Labs. All rights reserved.</p>
-            <p className="text-[11px] text-slate-600">Technical Support: Available via WhatsApp & Telegram Support Groups</p>
+            <p className="text-[12px] text-slate-600">Technical Support: Available via WhatsApp & Telegram Support Groups</p>
+            <GoogleReviewCta className="mt-1 self-center sm:self-start" />
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center sm:justify-end">
+            <Link to="/courses" className="hover:text-slate-350 transition-colors">Courses</Link>
+            <span>•</span>
+            <Link to="/internship" className="hover:text-slate-350 transition-colors">Internship</Link>
+            <span>•</span>
+            <Link to="/verify" className="hover:text-slate-350 transition-colors">Verify Certificate</Link>
+            <span>•</span>
             <Link to="/about" className="hover:text-slate-350 transition-colors">About Us</Link>
             <span>•</span>
             <Link to="/contact" className="hover:text-slate-350 transition-colors">Contact Us</Link>
@@ -112,9 +140,16 @@ function App() {
     <AuthProvider>
       <UIProvider>
         <ThemeProvider>
-          <Router>
-            <AppRoutes />
-          </Router>
+          {/* reducedMotion="user" makes Framer Motion honour the OS setting.
+              The CSS block in index.css only reaches CSS keyframes/transitions —
+              Framer animates via inline transform, so without this every
+              whileInView/initial stagger keeps running for users who asked the
+              system to minimise motion (master task §21). */}
+          <MotionConfig reducedMotion="user">
+            <Router>
+              <AppRoutes />
+            </Router>
+          </MotionConfig>
         </ThemeProvider>
       </UIProvider>
     </AuthProvider>

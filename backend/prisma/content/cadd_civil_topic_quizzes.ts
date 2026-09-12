@@ -1,5 +1,7 @@
 // ============================================================================
-// CADDED Software (Civil/Architecture) — Per-Topic Quiz Map (issue #93)
+// CADD & BIM Foundation (Architecture/Visualization) — Per-Topic Quiz Map
+// (issue #93; repositioned from "CADDED Software (Civil/Architecture)" per
+// Wave-0 Decision 1-B).
 // ----------------------------------------------------------------------------
 // The frontend topic-lock flow requires EVERY topic to have its own attached
 // QuizQuestions: "Start Topic Quiz" hits /quiz/questions/topic/:topicId and
@@ -49,7 +51,7 @@ export const caddCivilTopicQuizzes: Record<string, CaddCivilTopicQuiz[]> = {
   'Utilities, Setbacks & Zoning Lines': [
     { text: 'The layer convention for a proposed water service line is…', options: ['V-UTIL-WAT-PROP', 'C-TOPO-MAJR-EX', 'A-DOOR', 'S-GRID'], correctAnswer: 'V-UTIL-WAT-PROP' },
     { text: 'The minimum distance a building must keep from the boundary is the…', options: ['Setback', 'Easement', 'Contour interval', 'Overhang'], correctAnswer: 'Setback' },
-    { text: 'A building 0.2 m inside its required setback will…', options: ['Fail the plan-check', 'Be approved with a note', 'Auto-correct', 'Only matter at handover'], correctAnswer: 'Fail the plan-check' },
+    { text: 'A building 0.2 m inside its required setback will…', options: ['Fail the plan-check', 'Be approved with a note', 'Pass if drawn to scale', 'Only matter at handover'], correctAnswer: 'Fail the plan-check' },
     { text: 'A floodplain boundary on a site plan is often shown as…', options: ['A screened hatch', 'A bold red line', 'A text note only', 'A contour'], correctAnswer: 'A screened hatch' },
   ],
   'Spot Elevations & Contour Lines': [
@@ -89,7 +91,7 @@ export const caddCivilTopicQuizzes: Record<string, CaddCivilTopicQuiz[]> = {
     { text: 'The overlay that reveals two floors misaligned is…', options: ['Drawing both floors in one file on separate layers and comparing', 'Printing once', 'Deleting a floor', 'Changing units'], correctAnswer: 'Drawing both floors in one file on separate layers and comparing' },
   ],
   'Creating Sections & Elevations': [
-    { text: 'The command that creates a section cut through a building in AutoCAD is…', options: ['SECTION', 'EXTRUDE', 'SLICE', 'AREA'], correctAnswer: 'SECTION' },
+    { text: 'The AutoCAD command that creates a non-destructive section plane through a 3D building model (used to produce section views) is…', options: ['SECTIONPLANE', 'EXTRUDE', 'SLICE', 'AREA'], correctAnswer: 'SECTIONPLANE' },
     { text: 'The projection of the building as seen from outside is the…', options: ['Elevation', 'Section', 'Plan', 'Detail'], correctAnswer: 'Elevation' },
     { text: 'The floor-to-floor height is measured between…', options: ['Consecutive finished floor levels', 'The top of the parapet and the ground', 'The walls and the roof', 'The door heads'], correctAnswer: 'Consecutive finished floor levels' },
     { text: 'A section line on the plan is drawn with…', options: ['A thick line with arrows showing the cut direction', 'A dashed contour', 'A centre line', 'A text leader'], correctAnswer: 'A thick line with arrows showing the cut direction' },
@@ -173,7 +175,7 @@ export const caddCivilTopicQuizzes: Record<string, CaddCivilTopicQuiz[]> = {
     { text: 'A light that casts no shadow is usually…', options: ['A hidden/shadow-off light for fill only', 'The key light', 'A photometric light', 'A daylight system'], correctAnswer: 'A hidden/shadow-off light for fill only' },
   ],
   'Three-Point Lighting Setup': [
-    { text: 'The three lights in a classic three-point setup are…', options: ['Key, fill and rim/back', 'Sun, sky and bounce', 'Spot, omni and target', 'Red, green and blue'], correctAnswer: 'Key, fill and rim/back' },
+    { text: 'The three lights in a classic three-point setup are…', options: ['Key, fill and rim/back', 'Sun, sky and bounce', 'Spot, omni and target', 'Ambient, global and bounce'], correctAnswer: 'Key, fill and rim/back' },
     { text: 'The brightest light that defines the main look is the…', options: ['Key light', 'Fill light', 'Rim light', 'Skylight'], correctAnswer: 'Key light' },
     { text: 'The light that softens the shadows on the dark side is the…', options: ['Fill light', 'Key light', 'Rim light', 'Bounce only'], correctAnswer: 'Fill light' },
     { text: 'A rim/back light is placed…', options: ['Behind the subject to separate it from the background', 'In front at the camera', 'Under the floor', 'At the horizon'], correctAnswer: 'Behind the subject to separate it from the background' },
@@ -360,7 +362,7 @@ export const caddCivilTopicQuizzes: Record<string, CaddCivilTopicQuiz[]> = {
   ],
   'Rebar Sets, Shape & Bending': [
     { text: 'The rebar shape code for a straight bar is…', options: ['01', '07', '15', '35'], correctAnswer: '01' },
-    { text: 'The rebar shape code for a rectangular stirrup is…', options: ['07', '01', '28', '33'], correctAnswer: '07' },
+    { text: "In Revit's default metric rebar shape families, the shape for a rectangular stirrup is…", options: ['07', '01', '28', '33'], correctAnswer: '07' },
     { text: 'The tool that fills a beam with a row of identical stirrups is…', options: ['Rebar Set', 'Array', 'Copy', 'Beam System'], correctAnswer: 'Rebar Set' },
     { text: 'The bend radius rule prevents…', options: ['The bar cracking at the bend', 'Rust', 'Long bars', 'Heavy bars'], correctAnswer: 'The bar cracking at the bend' },
   ],

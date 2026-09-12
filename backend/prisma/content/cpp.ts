@@ -30,12 +30,6 @@ export interface CppSection {
   quizzes: CppQuiz[];
 }
 
-export interface CppFinalExamQuestion {
-  text: string;
-  options: string[];
-  correctAnswer: string;
-}
-
 export const cppSections: CppSection[] = [
   // ──────────────────────────────────────────────────────────────────────────
   // WEEK 1 — Introduction to C++ & Compilation Model
@@ -937,25 +931,4 @@ export const cppSections: CppSection[] = [
       { text: 'Which compile flags are typical for bare-metal C++?', options: ['-fexceptions -fno-rtti', '-fno-exceptions -fno-rtti', '-fno-exceptions -frtti', 'No flags'], correctAnswer: '-fno-exceptions -fno-rtti' },
     ],
   },
-];
-
-export const cppFinalExam: CppFinalExamQuestion[] = [
-  { text: 'Which stage of compilation pastes in #include contents?', options: ['Linking', 'Preprocessing', 'Compilation', 'Assembly'], correctAnswer: 'Preprocessing' },
-  { text: 'Why prefer `int x{5};` over `int x = 5;`?', options: ['It is shorter', 'Brace init refuses narrowing conversions', 'It is faster at runtime', 'It works without a type'], correctAnswer: 'Brace init refuses narrowing conversions' },
-  { text: 'The trap of `-1 < 0u` reveals…', options: ['Unsigned overflow', 'Signed values convert to huge unsigned numbers in mixed comparisons', 'A compiler bug', 'Floating-point rounding'], correctAnswer: 'Signed values convert to huge unsigned numbers in mixed comparisons' },
-  { text: '`x &= ~(1u << 3);` is used to…', options: ['Set bit 3', 'Clear bit 3', 'Toggle bit 3', 'Test bit 3'], correctAnswer: 'Clear bit 3' },
-  { text: 'After a bad `std::cin >> x;`, recovery needs…', options: ['Re-declaring x', 'clear() plus ignore() to reset the fail state and discard bad input', 'Flushing with std::endl', 'Rebooting the terminal'], correctAnswer: 'clear() plus ignore() to reset the fail state and discard bad input' },
-  { text: 'A switch case missing a break causes…', options: ['A compile error', 'Fall-through into the next case', 'An infinite loop', 'Undefined behaviour only with enums'], correctAnswer: 'Fall-through into the next case' },
-  { text: '`continue` inside a while loop can cause an infinite loop when…', options: ['The condition is a constant', 'It skips the increment at the bottom of the body', 'The loop body is empty', 'break is used too'], correctAnswer: 'It skips the increment at the bottom of the body' },
-  { text: 'Passing a large std::string to a read-only function should use…', options: ['By value', 'const std::string&', 'std::string&&', 'A C-string'], correctAnswer: 'const std::string&' },
-  { text: '`std::array` improves on raw arrays because…', options: ['It is smaller', 'It knows its size and offers .at() bounds checking', 'It allocates on the heap', 'It is faster'], correctAnswer: 'It knows its size and offers .at() bounds checking' },
-  { text: 'What is the value of `std::stoi("123abc", &pos)` and pos?', options: ['123 and 0', '123 and 3', '0 and 3', 'An exception'], correctAnswer: '123 and 3' },
-  { text: 'The class members are private by default means…', options: ['The class is secure', 'Callers must use public methods, protecting invariants', 'The class cannot be copied', 'Memory is protected'], correctAnswer: 'Callers must use public methods, protecting invariants' },
-  { text: 'RAII\'s core promise is…', options: ['Automatic allocation', 'Resources released by destructors on every exit path', 'Faster memory', 'No constructors needed'], correctAnswer: 'Resources released by destructors on every exit path' },
-  { text: 'A class owning a raw pointer needs (Rule of Three)…', options: ['A destructor only', 'Destructor plus copy constructor and copy assignment', 'A virtual function', 'A friend'], correctAnswer: 'Destructor plus copy constructor and copy assignment' },
-  { text: 'Why should a polymorphic base have a virtual destructor?', options: ['Style only', 'So deleting through a base pointer runs the derived destructor', 'To enable templates', 'To add a vtable'], correctAnswer: 'So deleting through a base pointer runs the derived destructor' },
-  { text: '`operator<<` for your type must be a free function because…', options: ['Members cannot stream', 'The left operand is std::ostream, not your class', 'It is faster', 'It cannot be const'], correctAnswer: 'The left operand is std::ostream, not your class' },
-  { text: 'Function templates are resolved…', options: ['At runtime via a vtable', 'At compile time, fully inlinable', 'By the linker', 'By the preprocessor'], correctAnswer: 'At compile time, fully inlinable' },
-  { text: '`std::map` lookups are O(log n); `std::unordered_map` average lookups are…', options: ['O(n)', 'O(1) via hashing', 'O(log n)', 'O(n log n)'], correctAnswer: 'O(1) via hashing' },
-  { text: '`std::move` on an object enables…', options: ['A deep copy', 'Transferring resources instead of copying, leaving the source empty-but-valid', 'A memory leak', 'Immediate deletion'], correctAnswer: 'Transferring resources instead of copying, leaving the source empty-but-valid' },
 ];

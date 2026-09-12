@@ -28,8 +28,8 @@ const Badge: React.FC<BadgeProps> = ({
   };
 
   const sizes = {
-    sm: 'px-1.5 py-0.5 text-[11px]',
-    md: 'px-2.5 py-1 text-[11px]',
+    sm: 'px-1.5 py-0.5 text-[12px]',
+    md: 'px-2.5 py-1 text-[12px]',
   };
 
   return (

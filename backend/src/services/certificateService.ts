@@ -40,7 +40,7 @@ export class CertificateService {
       case "Python": return "Python Programming & Scripting";
       case "SQL": return "Database Management & SQL";
       case "CADDED_Mech": return "CADDED Software (Mechanical)";
-      case "CADDED_Civil": return "CADDED Software (Civil/Architecture)";
+      case "CADDED_Civil": return "CADD & BIM Foundation (Architecture/Visualization)";
       default: return "Advanced Computing Solutions";
     }
   }

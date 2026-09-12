@@ -32,12 +32,6 @@ export interface CaddMechSection {
   quizzes: CaddMechQuiz[];
 }
 
-export interface CaddMechFinalExamQuestion {
-  text: string;
-  options: string[];
-  correctAnswer: string;
-}
-
 export const caddMechSections: CaddMechSection[] = [
   // ──────────────────────────────────────────────────────────────────────────
   // WEEK 1 — AutoCAD Workspace, Units & Layers
@@ -1019,25 +1013,4 @@ export const caddMechSections: CaddMechSection[] = [
       { text: 'Which credential validates GD&T knowledge per ASME Y14.5?', options: ['GDTP (Geometric Dimensioning & Tolerancing Professional)', 'CSWA', 'AutoCAD Certified Professional', 'NIMS Level I'], correctAnswer: 'GDTP (Geometric Dimensioning & Tolerancing Professional)' },
     ],
   },
-];
-
-export const caddMechFinalExam: CaddMechFinalExamQuestion[] = [
-  { text: 'A 100-unit edge is drawn with AutoCAD LINE but appears tiny. The professional fix is…', options: ['Zoom Extents (Z E) — geometry was drawn at true scale', 'Scale the line up 100x', 'Redraw in paper space', 'Change the units to centimetres'], correctAnswer: 'Zoom Extents (Z E) — geometry was drawn at true scale' },
-  { text: 'Which workflow guarantees the two symmetric halves of a machined bracket are bit-identical?', options: ['Model one half, then MIRROR it about the centre plane', 'Redraw the second half by eye', 'Offset the outline', 'Copy and rotate the part'], correctAnswer: 'Model one half, then MIRROR it about the centre plane' },
-  { text: 'An AutoCAD drawing must show a 5 mm fillet on every internal corner of a moulded housing. Where does the radius belong?', options: ['In the 3D model, added last after all cuts', 'Only as a leader note', 'Only on the paper-space viewport', 'In the BOM'], correctAnswer: 'In the 3D model, added last after all cuts' },
-  { text: 'In SolidWorks, a sketch that is still blue when it should be fully defined usually needs…', options: ['More dimensions or relations until every entity is constrained', 'More fillets', 'A thicker extrusion', 'A new plane'], correctAnswer: 'More dimensions or relations until every entity is constrained' },
-  { text: 'A solid model must keep two holes always the same diameter. The design-intent correct approach is…', options: ['An Equal relation in the sketch or a shared equation', 'Two independent 6 mm dimensions', 'A note on the drawing', 'Two separate sketches'], correctAnswer: 'An Equal relation in the sketch or a shared equation' },
-  { text: 'A shaft must seat in a bore but still rotate. The minimum set of mates is…', options: ['Concentric (bore axis to journal axis)', 'Coincident only', 'Distance plus parallel', 'A gear mate'], correctAnswer: 'Concentric (bore axis to journal axis)' },
-  { text: 'A moulded cover\'s vertical walls will not release from the tool. Which two analyses confirm and fix this?', options: ['Draft Analysis then the Draft feature at 1-2 degrees', 'Thickness Analysis then shell', 'Interference Detection then offset', 'Motion study then mates'], correctAnswer: 'Draft Analysis then the Draft feature at 1-2 degrees' },
-  { text: 'In CATIA GSD, two extruded panels meet at 90 degrees and must become one smooth shell. The correct sequence is…', options: ['Trim both, then Join, then fillet the corner', 'Fillet first, then explode', 'Join first, then split', 'Loft them directly'], correctAnswer: 'Trim both, then Join, then fillet the corner' },
-  { text: 'A Class-A automotive panel is rejected for a visible reflection break. The surface fails which continuity requirement?', options: ['G2 curvature continuity', 'G0 contact', 'G1 tangency', 'Geometric size'], correctAnswer: 'G2 curvature continuity' },
-  { text: 'What does the block N010 G90 G21 G54 G00 X0 Y0 do, in order?', options: ['Set absolute/metric/offset 1, then rapid to part zero', 'Set incremental, cut a hole', 'Return home then drill', 'Set inches then plunge'], correctAnswer: 'Set absolute/metric/offset 1, then rapid to part zero' },
-  { text: 'A deep hole keeps breaking drills. The programming fix is…', options: ['G83 with a peck step about 1.5x the drill diameter', 'G81 at lower feed', 'G84 tapping', 'Raising the spindle speed'], correctAnswer: 'G83 with a peck step about 1.5x the drill diameter' },
-  { text: 'A finished wall comes out 0.3 mm undersize because the 12 mm end mill leaves a path on the part centreline. The fix is…', options: ['Cutter radius compensation (G41/G42) so the path offsets by the radius', 'A smaller step-over', 'A slower feed', 'More coolant'], correctAnswer: 'Cutter radius compensation (G41/G42) so the path offsets by the radius' },
-  { text: 'The first dry run of a new program on the machine should be…', options: ['Single-block mode at low rapid override', 'Full speed with the door closed', 'Continuous run at 100%', 'A dry run is never needed'], correctAnswer: 'Single-block mode at low rapid override' },
-  { text: 'A feature control frame reads: position, Ø0.2, MMC, datums A B C. The hole axis must lie…', options: ['Inside a 0.2 mm cylindrical zone at true position, referenced to A B C', 'Inside a 0.2 mm square zone from the edge', 'At exactly the nominal point with no tolerance', 'Within 0.2 degrees of perpendicular'], correctAnswer: 'Inside a 0.2 mm cylindrical zone at true position, referenced to A B C' },
-  { text: 'Three parts at 20.00 ±0.1 stack to 60.00 worst-case ±0.3, which exceeds the 0.2 assembly clearance. The best fix is…', options: ['A clearance or adjustment feature, or tightening one critical tolerance only', 'Tightening all three to ±0.01', 'Shimming nothing and accepting scrap', 'Adding a fourth part'], correctAnswer: 'A clearance or adjustment feature, or tightening one critical tolerance only' },
-  { text: 'A waterjet fabricator reports the part came out 5 mm too large. The most likely cause is…', options: ['The exported DXF carried a non-1:1 scale factor', 'The CAD model was wrong', 'The material shrank', 'The tool was worn'], correctAnswer: 'The exported DXF carried a non-1:1 scale factor' },
-  { text: 'Purchasing orders parts from the BOM. To keep the BOM truthful across a part rename, you should…', options: ['Link BOM rows to the part file properties', 'Retype the BOM each time', 'Keep names frozen forever', 'Hide the BOM'], correctAnswer: 'Link BOM rows to the part file properties' },
-  { text: 'A drawing is edited to change a hole size. The professional release step that MUST follow is…', options: ['A new revision letter and a revision-table row', 'Re-saving the PDF over the old one', 'Noting it in a chat message', 'Nothing until the shop asks'], correctAnswer: 'A new revision letter and a revision-table row' },
 ];

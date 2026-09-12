@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
-import { caddMechSections, caddMechFinalExam } from './content/cadd_mech';
+import { caddMechSections } from './content/cadd_mech';
 import { caddMechTopicQuizzes } from './content/cadd_mech_topic_quizzes';
 
 dotenv.config();
@@ -134,25 +134,11 @@ async function main() {
     );
   }
 
-  // Replace the final exam: near-identical templates → distinct questions.
-  const oldExam = await prisma.finalExamQuestion.deleteMany({ where: { courseId: COURSE_ID } });
-  for (const q of caddMechFinalExam) {
-    await prisma.finalExamQuestion.create({
-      data: {
-        courseId: COURSE_ID,
-        text: q.text,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
-      },
-    });
-  }
-
   console.log(`\n--- CADDED_MECH RE-SEED COMPLETE ---`);
   console.log(`Modules rebuilt:   ${caddMechSections.length}`);
   console.log(`Topics created:    ${totalTopics}`);
   console.log(`Topic quizzes:     ${totalTopicQuizzes} (per-topic, topic-lock flow)`);
   console.log(`Chapter quizzes:   ${totalChapterQuizzes} (module-level)`);
-  console.log(`Final exam:        replaced ${oldExam.count} template questions → ${caddMechFinalExam.length} distinct`);
 }
 
 main()

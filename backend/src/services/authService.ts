@@ -14,6 +14,18 @@ const generateReferralCode = (name: string) => {
   return `REF-${cleanName}-${randomSuffix}`;
 };
 
+// --- Password-reset token hardening (M-001) -------------------------------
+// The raw reset token is short-lived, single-use and never persisted. Only a
+// SHA-256 digest is stored (in the existing `resetToken` column) so a database
+// leak never yields a usable token. The raw value is generated solely to be
+// delivered to the user through a channel outside this function.
+const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour (existing expiry window)
+
+const generateResetToken = (): string => crypto.randomBytes(32).toString('hex');
+
+const hashResetToken = (token: string): string =>
+  crypto.createHash('sha256').update(token).digest('hex');
+
 export const getReferralStats = async (referralCode: string | null) => {
   if (!referralCode) {
     return {
@@ -101,35 +113,39 @@ export const registerUser = async (userData: any) => {
   return { token, user: { ...userWithoutPassword, ...stats } };
 };
 
-// #86: forgot-password flow was 404 — the frontend called these endpoints but
-// they never existed. Added with anti-enumeration + expiry. There is no mailer
-// in this deployment, so the reset link is returned in the response body (dev)
-// and must be replaced with a real email send in production.
+// #86 + M-001: forgot-password flow. Anti-enumeration: the response is
+// identical whether or not the account exists, and no reset credential is ever
+// exposed in the HTTP response. Only a SHA-256 hash of the token is persisted.
+// NOTE: there is no mailer in this deployment — the raw token must be delivered
+// to the user's inbox by a real email send (follow-up task; M-001 report).
 export const forgotPassword = async (email: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
-  // Anti-enumeration: respond identically whether or not the email exists.
-  if (!user) return { sent: false, resetUrl: undefined };
+  // Token work is performed on both paths so the response timing does not
+  // reveal whether the account exists (rate-limit 5/min also applies).
+  const resetToken = generateResetToken();
+  const resetTokenHash = hashResetToken(resetToken);
+  const resetTokenExpires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
 
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  if (user) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { resetToken: resetTokenHash, resetTokenExpires }
+    });
+    // TODO(M-001 follow-up): deliver `resetToken` to `email` via a real email
+    // send. Never log it, never return it in an API response.
+  }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { resetToken, resetTokenExpires }
-  });
-
-  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
-
-  return { sent: true, resetUrl };
+  return { sent: true };
 };
 
 export const resetPassword = async (token: string, newPassword: string) => {
   if (!token) throw new AppError('Reset token is required', 400);
 
+  // Look up by the same digest used at issuance; the plaintext token itself is
+  // never stored or queried.
   const user = await prisma.user.findFirst({
-    where: { resetToken: token }
+    where: { resetToken: hashResetToken(token) }
   });
 
   if (!user || !user.resetTokenExpires || user.resetTokenExpires < new Date()) {
@@ -138,6 +154,7 @@ export const resetPassword = async (token: string, newPassword: string) => {
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+  // Single-use: clearing the stored hash makes the same token unusable again.
   await prisma.user.update({
     where: { id: user.id },
     data: {
@@ -150,9 +167,14 @@ export const resetPassword = async (token: string, newPassword: string) => {
   return { success: true };
 };
 
+// bcrypt digest of a random local password, compared against when the account
+// does not exist so both login paths pay the same hashing cost. Without it the
+// response time reveals whether an email is registered (user enumeration).
+const ABSENT_USER_HASH = '$2b$10$gdh207ewUBP7et3MKymIUedHIGnUcgEJ.w1S1sY.SekRblN/aDNJG';
+
 export const loginUser = async (credentials: any) => {
   const { email, password } = credentials;
-  
+
   const user = await prisma.user.findUnique({
     where: { email },
     include: {
@@ -162,6 +184,7 @@ export const loginUser = async (credentials: any) => {
   });
 
   if (!user) {
+    await bcrypt.compare(password, ABSENT_USER_HASH);
     throw new AppError('Invalid credentials', 400);
   }
 
@@ -214,7 +237,11 @@ export const getUserById = async (userId: number) => {
 
   const stats = await getReferralStats(user.referralCode);
 
-  const { password: _, ...userWithoutPassword } = user;
+  // Auth-token columns are never part of an API response: this object is
+  // returned by GET /auth/me and attached to req.user on every authenticated
+  // request, so leaking them hands the caller its own reset/verification
+  // credentials (and their expiry) for no product reason.
+  const { password: _, resetToken: _resetToken, resetTokenExpires: _resetTokenExpires, verificationToken: _verificationToken, ...userWithoutPassword } = user;
   return { ...userWithoutPassword, ...stats };
 };
 

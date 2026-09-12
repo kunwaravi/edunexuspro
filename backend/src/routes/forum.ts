@@ -1,6 +1,7 @@
 import { Router, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
 import { authenticateToken } from '../middleware/auth';
+import { isEnrolled, requireEnrollment } from '../services/enrollmentService';
 import { logger } from '../lib/logger';
 import { validateBody } from '../middleware/validate';
 
@@ -15,6 +16,11 @@ router.get('/', authenticateToken, async (req: any, res: Response, next: NextFun
     const pageNum = Math.max(1, parseInt(page as string));
     const limitNum = Math.min(Math.max(1, parseInt(limit as string)), 100);
     const skip = (pageNum - 1) * limitNum;
+
+    // Reading a course's discussion is course learning access, so it carries the
+    // same gate as posting in it — otherwise the enrolled-only forum was readable
+    // by any authenticated account.
+    if (courseId && !(await requireEnrollment(req, res, courseId as string))) return;
 
     const whereClause: any = {};
     if (courseId) {
@@ -122,6 +128,9 @@ router.get('/:postId', authenticateToken, async (req: any, res: Response, next: 
       return res.status(404).json({ message: 'Discussion post not found.' });
     }
 
+    // A course-scoped thread is only readable by that course's enrolled learners.
+    if (discussion.courseId && !(await requireEnrollment(req, res, discussion.courseId))) return;
+
     res.json({
       discussion,
     });
@@ -142,12 +151,12 @@ router.post(
       const userId = req.user.id;
 
       // P2 (#69): only enrolled users (or admins) may post in a course forum.
-      // A course-scoped post requires a VERIFIED payment for that course.
+      // TASK 4: consolidated around the canonical access record — Enrollment
+      // (ACTIVE), which is backfilled from VERIFIED payments. Behavior is
+      // identical to the previous payment lookup but no longer duplicates logic.
       if (courseId) {
         const isAdmin = req.user.role === 'ADMIN';
-        const enrolled = await prisma.payment.findFirst({
-          where: { userId, courseId, status: 'VERIFIED' }
-        });
+        const enrolled = await isEnrolled(userId, courseId);
         if (!isAdmin && !enrolled) {
           return res.status(403).json({ message: 'You must be enrolled in this course to post in its forum.' });
         }
@@ -207,6 +216,10 @@ router.post(
       if (!discussion) {
         return res.status(404).json({ message: 'Discussion post not found.' });
       }
+
+      // Replying into a course's thread requires enrollment in that course, the
+      // same rule the create-post route enforces.
+      if (discussion.courseId && !(await requireEnrollment(req, res, discussion.courseId))) return;
 
       const comment = await prisma.forumComment.create({
         data: {

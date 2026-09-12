@@ -31,12 +31,14 @@ const Verify = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialId]);
 
-  // Handle email verification flow if token is present
+  // Handle email verification flow if token is present.
+  // Deliberately keyed on `token` alone: the verification is a one-shot
+  // exchange for the token in the URL, so it must not re-run when the handler
+  // identity changes on an unrelated re-render.
   useEffect(() => {
     if (token) {
       handleEmailVerification(token);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   async function handleEmailVerification(verificationToken: string) {
@@ -207,7 +209,7 @@ const Verify = () => {
             </button>
           </div>
           {!result && !error && (
-            <p className="text-[11px] text-slate-500 pl-1">
+            <p className="text-[12px] text-slate-500 pl-1">
               Enter the credential ID printed on your certificate to confirm its authenticity.
             </p>
           )}
@@ -232,7 +234,7 @@ const Verify = () => {
                     <h4 className="text-emerald-400 font-extrabold text-sm uppercase tracking-wider">
                       Credential Verified
                     </h4>
-                    <p className="text-slate-400 text-[11px] font-mono tracking-tight mt-0.5 break-all">
+                    <p className="text-slate-400 text-[12px] font-mono tracking-tight mt-0.5 break-all">
                       {credentialId.trim().toUpperCase()}
                     </p>
                   </div>
@@ -240,27 +242,27 @@ const Verify = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-xs">
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Candidate Name</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Candidate Name</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.candidateName}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Institution</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Institution</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.collegeName}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Branch</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Branch</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.branchName}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Course</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Course</span>
                     <span className="font-bold text-amber-400 text-sm mt-0.5 block">{result.courseName}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Grade</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Grade</span>
                     <span className="font-bold text-emerald-400 text-sm mt-0.5 block">GRADE {result.grade}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Certification Date</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Certification Date</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.completionDate}</span>
                   </div>
                 </div>
@@ -279,9 +281,9 @@ const Verify = () => {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
                             <p className="font-semibold text-white">Week {module.week}: {module.title}</p>
-                            <p className="text-slate-500 text-[11px] mt-0.5">{module.description}</p>
+                            <p className="text-slate-500 text-[12px] mt-0.5">{module.description}</p>
                           </div>
-                          <span className="text-[11px] bg-emerald-500/10 text-emerald-300 px-2 py-1 rounded border border-emerald-500/30 whitespace-nowrap">
+                          <span className="text-[12px] bg-emerald-500/10 text-emerald-300 px-2 py-1 rounded border border-emerald-500/30 whitespace-nowrap">
                             {module.topicCount} topics
                           </span>
                         </div>
@@ -318,7 +320,7 @@ const Verify = () => {
                     <h4 className="text-emerald-400 font-extrabold text-sm uppercase tracking-wider">
                       Credential Verified
                     </h4>
-                    <p className="text-slate-400 text-[11px] font-mono tracking-tight mt-0.5 break-all">
+                    <p className="text-slate-400 text-[12px] font-mono tracking-tight mt-0.5 break-all">
                       {credentialId.trim().toUpperCase()}
                     </p>
                   </div>
@@ -326,43 +328,43 @@ const Verify = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 text-xs">
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Certificate Type</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Certificate Type</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.credentialTitle || 'Internship Completion Certificate'}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Status</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Status</span>
                     <span className="font-bold text-emerald-400 text-sm mt-0.5 block">VERIFIED</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Candidate Name</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Candidate Name</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.candidateName}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Internship</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Internship</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.programTitle}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Domain</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Domain</span>
                     <span className="font-bold text-amber-400 text-sm mt-0.5 block">{result.domain}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Role</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Role</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.role}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Duration</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Duration</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.duration || '—'}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Internship Period</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Internship Period</span>
                     <span className="font-bold text-white text-sm mt-0.5 block">{result.startDate} – {result.endDate}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Issued By</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Issued By</span>
                     <span className="font-bold text-amber-400 text-sm mt-0.5 block">{result.issuedBy || 'EduNexus Pro'}</span>
                   </div>
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Credential ID</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Credential ID</span>
                     <span className="font-bold text-white text-sm mt-0.5 block break-all font-mono">{credentialId.trim().toUpperCase()}</span>
                   </div>
                 </div>
@@ -395,7 +397,7 @@ const Verify = () => {
                     <h4 className="text-amber-400 font-extrabold text-sm uppercase tracking-wider">
                       Pending Verification
                     </h4>
-                    <p className="text-slate-400 text-[11px] font-mono tracking-tight mt-0.5 break-all">
+                    <p className="text-slate-400 text-[12px] font-mono tracking-tight mt-0.5 break-all">
                       {credentialId.trim().toUpperCase()}
                     </p>
                   </div>
@@ -403,18 +405,18 @@ const Verify = () => {
 
                 <div className="space-y-3 mt-4 text-xs">
                   <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                    <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Status</span>
+                    <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Status</span>
                     <span className="font-bold text-amber-400 text-sm mt-0.5 block">{result.auditStatus}</span>
                   </div>
-                  {/* Internship PENDING has no courseName and no PII (issue #102) */}
+                  {/* Internship credentials carry no courseName and no PII (issue #102) */}
                   {result.certificateType === 'INTERNSHIP' ? (
                     <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                      <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Certificate Type</span>
+                      <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Certificate Type</span>
                       <span className="font-bold text-white text-sm mt-0.5 block">{result.credentialTitle || 'Internship Completion Certificate'}</span>
                     </div>
                   ) : (
                     <div className="p-3.5 rounded-lg bg-slate-950/50 border border-slate-900">
-                      <span className="text-slate-500 block text-[11px] uppercase tracking-wider font-semibold">Course</span>
+                      <span className="text-slate-500 block text-[12px] uppercase tracking-wider font-semibold">Course</span>
                       <span className="font-bold text-white text-sm mt-0.5 block">{result.courseName}</span>
                     </div>
                   )}

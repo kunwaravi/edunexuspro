@@ -20,7 +20,7 @@ const QuizHeader: React.FC<QuizHeaderProps> = ({ onCancel, timeLeft, formatTime,
         <ChevronLeft size={16} /> Cancel Exam
       </button>
 
-      <h1 className="min-w-0 flex-1 text-center text-[11px] sm:text-xs font-black uppercase tracking-widest text-slate-200 truncate">
+      <h1 className="min-w-0 flex-1 text-center text-[12px] sm:text-xs font-black uppercase tracking-widest text-slate-200 truncate">
         {title}
       </h1>
 

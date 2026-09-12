@@ -101,13 +101,13 @@ const coursesList = [
   },
   {
     id: "CADDED_Civil",
-    title: "CADDED Software (Civil/Architecture)",
-    description: "Master AutoCAD Civil, 3DS Max rendering, Google SketchUp, and Revit BIM systems.",
+    title: "CADD & BIM Foundation (Architecture/Visualization)",
+    description: "Master CADD drafting, architectural visualization and structural BIM across AutoCAD, 3ds Max, SketchUp and Revit — from site & floor plans to 3D models, renders, rebar detailing and coordinated BIM sheet sets.",
     modules: [
-      "AutoCAD Civil Site Drafting & Residential Plans",
+      "AutoCAD Site Drafting & Residential Plans",
       "3ds Max Architectural Visualization & Texturing",
       "Google SketchUp Rapid 3D Prototyping & Layouts",
-      "Autodesk Revit (Civil) Structural Detailing & Analysis",
+      "Autodesk Revit Structural Detailing & Analysis",
       "Autodesk Revit (Architecture) BIM Modeling & Schedules"
     ]
   }
@@ -193,27 +193,6 @@ function generateModuleQuizzes(courseId: string, week: number, title: string) {
     
     const correctAnswer = options[(4 - rotate) % 4];
 
-    questions.push({
-      text: questionText,
-      options: options,
-      correctAnswer: correctAnswer
-    });
-  }
-  return questions;
-}
-
-// Helper to generate 50 final exam questions for a course
-function generateFinalExamQuestions(courseId: string) {
-  const questions = [];
-  for (let q = 1; q <= 50; q++) {
-    const questionText = `[Final Exam Q${q}] Which of the following is true concerning the core execution parameters of ${courseId} systems under load?`;
-    const options = [
-      `Deterministic low-overhead execution with strict compiler bounds check`,
-      `Asynchronous multi-threaded garbage collection overhead`,
-      `Dynamic page faults during stack pointer overflow checks`,
-      `System register resets using software supervisor calls`
-    ];
-    const correctAnswer = options[0];
     questions.push({
       text: questionText,
       options: options,
@@ -965,25 +944,10 @@ async function main() {
       }
     }
 
-    // Safe seeding of final exam questions for this course
-    const existingExamCount = await prisma.finalExamQuestion.count({ where: { courseId: course.id } });
-    if (existingExamCount > 0) {
-      console.log(`Final exam questions for ${course.id} already exist. Skipping final exam questions seeding to preserve manual admin edits.`);
-    } else {
-      // Seed 50 Final Exam Questions for this course
-      const examQuestions = generateFinalExamQuestions(course.id);
-      for (const eq of examQuestions) {
-        await prisma.finalExamQuestion.create({
-          data: {
-            courseId: course.id,
-            text: eq.text,
-            options: eq.options,
-            correctAnswer: eq.correctAnswer
-          }
-        });
-      }
-      console.log(`Seeded 50 Final Exam Questions for ${course.id}`);
-    }
+    // Final exam questions are DEPRECATED (Wave 0 Decision 2-B): the 156
+    // hand-written items are archived to docs/final-exam-archive/ and no longer
+    // seeded. The FinalExamQuestion table is left inert; the interactive-challenge
+    // engine is the replacement summative vehicle.
   }
 
   // Seed fCC-style interactive challenges (idempotent)

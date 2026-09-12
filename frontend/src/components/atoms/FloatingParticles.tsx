@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { prefersReducedMotion } from '../../lib/motion';
 
 const FloatingParticles: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -9,6 +10,12 @@ const FloatingParticles: React.FC = () => {
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    // Master task §21: this is a continuous requestAnimationFrame loop, so the
+    // CSS `prefers-reduced-motion` block cannot stop it — it draws on a canvas,
+    // not through CSS animation. Draw one static frame and never start the loop
+    // for users who asked the system to minimise motion.
+    const reducedMotion = prefersReducedMotion();
 
     let animationFrameId: number;
     let width = (canvas.width = window.innerWidth);
@@ -128,7 +135,8 @@ const FloatingParticles: React.FC = () => {
         }
       }
 
-      animationFrameId = requestAnimationFrame(animate);
+      // Reduced motion: render this one frame (the ambient backdrop) and stop.
+      if (!reducedMotion) animationFrameId = requestAnimationFrame(animate);
     };
 
     animate();

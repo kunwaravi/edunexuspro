@@ -20,7 +20,7 @@ const NotFound = () => {
         <img src="/logo.png" alt="Edunexus Logo" className="h-10 w-auto dark:brightness-0 dark:invert" />
       </div>
 
-      <p className="text-[11px] font-black uppercase tracking-[0.35em] text-indigo-600 dark:text-blue-400 mb-2">
+      <p className="text-[12px] font-black uppercase tracking-[0.35em] text-indigo-600 dark:text-blue-400 mb-2">
         Page not found
       </p>
 

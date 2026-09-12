@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Building, Mail, Phone, Clock, Globe, Send } from 'lucide-react';
 import { useUI } from '../context/UIContext';
 import api from '../api';
+import GoogleReviewCta from '../components/atoms/GoogleReviewCta';
 
 const Contact = () => {
   const { addToast } = useUI();
@@ -75,7 +76,7 @@ const Contact = () => {
           >
             <ArrowLeft size={16} /> Back to Home
           </Link>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/30 border border-indigo-900/40 px-2.5 py-0.5 rounded-full">
+          <span className="text-[12px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/30 border border-indigo-900/40 px-2.5 py-0.5 rounded-full">
             Contact Desk
           </span>
         </div>
@@ -154,6 +155,9 @@ const Contact = () => {
                   </div>
                 </div>
 
+                {/* Google review — renders only once the listing URL is configured */}
+                <GoogleReviewCta />
+
                 {/* Hours */}
                 <div className="flex items-start gap-4">
                   <div className="p-2.5 bg-slate-900 border border-slate-800 text-indigo-400 rounded-xl mt-1">
@@ -170,7 +174,7 @@ const Contact = () => {
 
               {/* Support channels */}
               <div className="pt-6 border-t border-slate-900 text-center">
-                <p className="text-[11px] text-slate-550 font-bold uppercase tracking-wider">Instant Help Channels</p>
+                <p className="text-[12px] text-slate-550 font-bold uppercase tracking-wider">Instant Help Channels</p>
                 <div className="flex justify-center gap-4 mt-3">
                   <a href="https://chat.whatsapp.com/Ba4J77LOmzVBrlHjQtm6Ar?s=cl&p=a&mlu=1" target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-emerald-450 hover:underline">
                     WhatsApp
@@ -196,7 +200,7 @@ const Contact = () => {
                 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-slate-450">Full Name *</label>
+                    <label className="text-[12px] font-black uppercase tracking-wider text-slate-450">Full Name *</label>
                     <input 
                       type="text" 
                       name="name"
@@ -208,7 +212,7 @@ const Contact = () => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-slate-450">Email Address *</label>
+                    <label className="text-[12px] font-black uppercase tracking-wider text-slate-450">Email Address *</label>
                     <input 
                       type="email" 
                       name="email"
@@ -222,7 +226,7 @@ const Contact = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-450">Subject</label>
+                  <label className="text-[12px] font-black uppercase tracking-wider text-slate-450">Subject</label>
                   <input 
                     type="text" 
                     name="subject"
@@ -234,7 +238,7 @@ const Contact = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-450">Message *</label>
+                  <label className="text-[12px] font-black uppercase tracking-wider text-slate-450">Message *</label>
                   <textarea 
                     name="message"
                     required

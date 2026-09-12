@@ -26,16 +26,16 @@ router.post('/login', rateLimiter(10, 60_000), validate(loginSchema), async (req
   }
 });
 
-// #86: Forgot password — frontend POSTs /auth/forgot-password but the route was
-// missing (404). Rate-limited; always 200 (anti-enumeration). No mailer in this
-// deployment, so resetUrl is returned in the body for dev convenience.
+// #86 + M-001: Forgot password — frontend POSTs /auth/forgot-password.
+// Rate-limited; always 200 with an identical body (anti-enumeration). The
+// response never contains the reset token or reset URL (M-001) — delivery of
+// the reset link happens out-of-band (email send; follow-up task).
 router.post('/forgot-password', rateLimiter(5, 60_000), validate(forgotPasswordSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await authService.forgotPassword(req.body.email);
+    await authService.forgotPassword(req.body.email);
     res.json({
       success: true,
-      message: 'If an account exists for that email, a reset link has been sent.',
-      ...(result.sent ? { resetUrl: result.resetUrl } : {})
+      message: 'If an account exists for that email, a reset link has been sent.'
     });
   } catch (error) {
     next(error);

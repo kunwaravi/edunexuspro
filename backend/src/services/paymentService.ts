@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma';
 import crypto from 'crypto';
 import { getReferralStats } from './authService';
+import { syncEnrollmentFromVerifiedPayment } from './enrollmentService';
 
 export const getAllPayments = async () => {
   return await prisma.payment.findMany({
@@ -44,6 +45,13 @@ export const getPendingPaymentStatus = async (userId: number, courseId: string) 
   });
 };
 
+/**
+ * NOTE (master task §24/§27): `amount` is part of the route contract but is
+ * deliberately NOT read — the price is re-derived below from the course row in
+ * the database. A client-supplied amount must never be trusted; tsc flags this
+ * parameter as unused, and "fixing" that by actually charging `amount` would
+ * let a caller name their own price. Behaviour unchanged.
+ */
 export const createOrder = async (userId: number, courseId: string, amount: number, couponCode?: string) => {
   const existingPayment = await prisma.payment.findFirst({
     where: { userId, courseId, status: { in: ['VERIFIED', 'PENDING', 'PENDING_VERIFICATION'] } }
@@ -158,6 +166,10 @@ export const submitPaymentForVerification = async (
 };
 
 // Admin manually verifies and approves a payment — unlocks certificate for student
+// TASK 4: the VERIFIED transition also activates the student's Enrollment
+// (access record), so premium learning unlocks together with the certificate.
+// Idempotent: enrollment upsert keys on [userId, courseId]. Payment remains the
+// financial/audit record and is never replaced by enrollment.
 export const adminVerifyPayment = async (paymentId: string) => {
   const payment = await prisma.payment.findUnique({
     where: { id: paymentId }
@@ -173,6 +185,10 @@ export const adminVerifyPayment = async (paymentId: string) => {
     where: { id: paymentId },
     data: { status: 'VERIFIED' }
   });
+
+  // Only the VERIFIED transition activates enrollment. INITIATED / PENDING /
+  // FAILED never reach this code path (adminMarkFailed never sets VERIFIED).
+  await syncEnrollmentFromVerifiedPayment(payment.userId, payment.courseId);
 
   return { success: true, payment: updatedPayment };
 };

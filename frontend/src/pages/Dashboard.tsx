@@ -4,12 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { useUI } from '../context/UIContext';
 import api from '../api';
 import { useCourses } from '../hooks/useCourses';
-import { Cpu, Code, Wifi, Box, BookOpen, Award, CheckCircle2, TrendingUp, Zap, Target, Globe, Terminal, Database, Wrench, Building2, Flame, RefreshCw, Briefcase, Clock, CalendarDays } from 'lucide-react';
+import { Cpu, Code, Wifi, Box, BookOpen, AlertTriangle, Award, CheckCircle2, TrendingUp, Zap, Target, Globe, Terminal, Database, Wrench, Building2, Flame, RefreshCw, BarChart3, Briefcase, Clock, CalendarDays } from 'lucide-react';
 import CourseCard from '../components/molecules/CourseCard';
 import Skeleton from '../components/atoms/Skeleton';
 import SkillRadar from '../components/molecules/SkillRadar';
 import ProjectStatusCard from '../components/molecules/ProjectStatusCard';
 import LeaderboardTab from '../components/organisms/LeaderboardTab';
+import MyInternshipApplications from '../components/organisms/MyInternshipApplications';
 import PageContainer from '../components/layout/PageContainer';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
 
@@ -75,7 +76,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { addToast } = useUI();
-  const { data: coursesData, loading } = useCourses();
+  const { data: coursesData, loading, error: coursesError, refetch: refetchCourses } = useCourses();
   // Daily coding challenge + real streak (issue #74)
   const [daily, setDaily] = useState<any>(null);
   const [dailySolved, setDailySolved] = useState<boolean | null>(null);
@@ -182,25 +183,27 @@ const Dashboard = () => {
     : null;
   const xpLevel = Math.floor((user?.points || 0) / 150) + 1;
 
-  // Calculate mock skills based on progress
-  const getSkillValue = (trackId: string) => {
-    const p = getCourseProgress(trackId);
-    return Math.min(Math.round(p.progress * 0.8 + (p.weekCompleted * 2)), 100);
-  };
-
-  const skills = [
-    { label: 'C Logic', value: getSkillValue('C') || 15, color: '#3b82f6' },
-    { label: 'OOP / C++', value: getSkillValue('C++') || 10, color: '#a855f7' },
-    { label: 'IoT Networking', value: getSkillValue('IoT') || 5, color: '#10b981' },
-    { label: 'Embedded HW', value: getSkillValue('Embedded') || 5, color: '#f59e0b' },
-    { label: 'Web Design', value: getSkillValue('WebDesign') || 5, color: '#ec4899' },
-    { label: 'Python Scripting', value: getSkillValue('Python') || 5, color: '#eab308' },
-    { label: 'SQL DB', value: getSkillValue('SQL') || 5, color: '#10b981' },
-    { label: 'Mech CAD', value: getSkillValue('CADDED_Mech') || 5, color: '#f97316' },
-    { label: 'Civil CAD', value: getSkillValue('CADDED_Civil') || 5, color: '#10b981' },
-    { label: 'System Design', value: Math.min(totalQuizzesPassed * 5, 100) || 10, color: '#06b6d4' },
-  ];
-  // #78 — top-4 skills shown as chips under the radar (showcase §02).
+  // Track matrix — built ONLY from the courses this student actually has
+  // progress in.
+  //
+  // The previous version listed ten legacy tracks with invented floors
+  // (`|| 15`, `|| 10`, `|| 5`), so a brand-new account saw a populated skill
+  // radar for courses it had never opened. Values are now the student's real
+  // completion percentage, and the panel shows an empty state until there is
+  // something real to draw.
+  const SKILL_COLORS = ['#3b82f6', '#a855f7', '#10b981', '#f59e0b', '#ec4899', '#eab308', '#06b6d4', '#f97316'];
+  const skills = (user?.progresses || [])
+    .filter((p: any) => (p.progress || 0) > 0)
+    .slice(0, 8)
+    .map((p: any, i: number) => ({
+      label: courses.find((c: any) => c.id === p.courseId)?.title
+        || courses.find((c: any) => c.id === p.courseId)?.shortTitle
+        || p.courseId,
+      value: Math.max(0, Math.min(100, Math.round(p.progress || 0))),
+      color: SKILL_COLORS[i % SKILL_COLORS.length],
+    }));
+  // A radar needs at least three points to read as a shape.
+  const hasSkillData = skills.length >= 3;
   const topSkills = [...skills].sort((a, b) => b.value - a.value).slice(0, 4);
   const skillBadgeColors = [
     'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400',
@@ -260,7 +263,7 @@ const Dashboard = () => {
 
         {user?.badges && user.badges.length > 0 && (
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider">Achievements:</span>
+            <span className="text-[12px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider">Achievements:</span>
             {user.badges.map((b: string) => {
               const meta: Record<string, string> = {
                 perfect_score: '💯 Perfect Score',
@@ -268,7 +271,7 @@ const Dashboard = () => {
                 bug_hunter: '🐛 Bug Hunter'
               };
               return (
-                <span key={b} className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                <span key={b} className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[12px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   {meta[b] || b}
                 </span>
               );
@@ -295,7 +298,7 @@ const Dashboard = () => {
       {/* ── Navigation Tabs ───────────────────────────────────────────── */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
         <TabsList className="flex border-b border-slate-200 dark:border-slate-800 gap-6 text-sm overflow-x-auto">
-          <TabsTrigger value="overview" className={`pb-4 font-black uppercase tracking-widest text-[11px] sm:text-xs transition-colors relative whitespace-nowrap ${
+          <TabsTrigger value="overview" className={`pb-4 font-black uppercase tracking-widest text-[12px] sm:text-xs transition-colors relative whitespace-nowrap ${
             activeTab === 'overview' ? 'text-indigo-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}>
             Overview
@@ -303,7 +306,7 @@ const Dashboard = () => {
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-blue-500"></span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="leaderboard" className={`pb-4 font-black uppercase tracking-widest text-[11px] sm:text-xs transition-colors relative whitespace-nowrap ${
+          <TabsTrigger value="leaderboard" className={`pb-4 font-black uppercase tracking-widest text-[12px] sm:text-xs transition-colors relative whitespace-nowrap ${
             activeTab === 'leaderboard' ? 'text-indigo-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}>
             Leaderboard
@@ -311,7 +314,7 @@ const Dashboard = () => {
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-blue-500"></span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="referrals" className={`pb-4 font-black uppercase tracking-widest text-[11px] sm:text-xs transition-colors relative whitespace-nowrap ${
+          <TabsTrigger value="referrals" className={`pb-4 font-black uppercase tracking-widest text-[12px] sm:text-xs transition-colors relative whitespace-nowrap ${
             activeTab === 'referrals' ? 'text-indigo-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}>
             Referrals & Rewards
@@ -335,9 +338,9 @@ const Dashboard = () => {
                   <stat.icon size={22} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">{stat.label}</p>
+                  <p className="text-[12px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 break-words">{stat.label}</p>
                   <h3 className="text-2xl font-black mt-0.5 text-slate-900 dark:text-white leading-none">{stat.value}</h3>
-                  <p className={`text-[11px] font-bold mt-1 truncate ${stat.hintColor}`}>{stat.hint}</p>
+                  <p className={`text-[12px] font-bold mt-1 break-words ${stat.hintColor}`}>{stat.hint}</p>
                 </div>
               </div>
             ))}
@@ -346,7 +349,7 @@ const Dashboard = () => {
           {/* ── Continue Learning banner (regression-safe resume CTA) ──── */}
           <div className="rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-slate-900/50 dark:to-slate-900/30 border border-indigo-200 dark:border-blue-500/30 shadow-sm p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-indigo-600 dark:text-blue-400 text-[11px] font-black uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-indigo-600 dark:text-blue-400 text-[12px] font-black uppercase tracking-widest">
                 <span className="flex h-2 w-2 relative">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 dark:bg-blue-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500 dark:bg-blue-500"></span>
@@ -363,7 +366,7 @@ const Dashboard = () => {
                         style={{ width: `${latestActiveCourse.progress}%` }}
                       ></div>
                     </div>
-                    <span className="text-[11px] font-black font-mono text-indigo-600 dark:text-blue-400 shrink-0">{latestActiveCourse.progress}%</span>
+                    <span className="text-[12px] font-black font-mono text-indigo-600 dark:text-blue-400 shrink-0">{latestActiveCourse.progress}%</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Currently on Chapter {latestActiveCourse.weekCompleted + 1} — clear the chapter assessment to proceed.
@@ -373,7 +376,7 @@ const Dashboard = () => {
                 <div className="mt-2.5">
                   <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Ready to start your journey?</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Choose a specialized engineering track below and claim your accredited certification.
+                    Choose a specialized engineering track below and earn your verifiable certification.
                   </p>
                 </div>
               )}
@@ -395,23 +398,44 @@ const Dashboard = () => {
                 <p className="text-sm font-bold text-red-600 dark:text-red-400">{dailyError}</p>
               </div>
             )}
+            {!daily && !dailyError && (
+              <div className="lg:col-span-3 rounded-2xl bg-white dark:bg-slate-900/50 dark:backdrop-blur-sm border border-slate-200 dark:border-slate-800 shadow-sm p-5" role="status" aria-label="Loading daily challenge">
+                <div className="flex items-center justify-between mb-4 gap-2">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-4 w-40 rounded-full" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                  <Skeleton className="h-3 w-28 rounded-full hidden sm:block" />
+                </div>
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-2/3 mt-2" />
+                <Skeleton className="h-3 w-36 mt-2 mb-4" />
+                <div className="grid sm:grid-cols-2 gap-2">
+                  <Skeleton className="h-10 rounded-xl" />
+                  <Skeleton className="h-10 rounded-xl" />
+                  <Skeleton className="h-10 rounded-xl" />
+                  <Skeleton className="h-10 rounded-xl" />
+                </div>
+              </div>
+            )}
             {daily && (
               <div className="lg:col-span-3 rounded-2xl bg-white dark:bg-slate-900/50 dark:backdrop-blur-sm border border-slate-200 dark:border-slate-800 shadow-sm p-5">
                 <div className="flex items-center justify-between mb-3 gap-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xl shrink-0">🔥</span>
                     <h3 className="text-sm font-extrabold text-slate-900 dark:text-white whitespace-nowrap">Daily Coding Challenge</h3>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[11px] font-black uppercase tracking-widest shrink-0">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[12px] font-black uppercase tracking-widest shrink-0">
                       Streak {daily.streak}
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-bold hidden sm:block">
+                  <span className="text-[12px] text-slate-400 dark:text-slate-500 font-bold hidden sm:block">
                     {daily.bonusOnNextMilestone === 0 ? 'Milestone ready!' : `${daily.bonusOnNextMilestone} days to bonus XP`}
                   </span>
                 </div>
 
                 <p className="text-[15px] font-semibold text-slate-900 dark:text-slate-200 leading-snug">{daily.question.text}</p>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1 mb-3">
+                <p className="text-[12px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1 mb-3">
                   {daily.question.topic} · {daily.question.difficulty}
                 </p>
 
@@ -437,24 +461,40 @@ const Dashboard = () => {
               </div>
             )}
 
-            {/* Skill Matrix */}
-            <div className={`${daily ? 'lg:col-span-2' : 'lg:col-span-5'} rounded-2xl bg-white dark:bg-slate-900/50 dark:backdrop-blur-sm border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex flex-col`}>
+            {/* Track Progress Matrix */}
+            <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-900/50 dark:backdrop-blur-sm border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex flex-col">
               <div className="flex items-center justify-between mb-3 gap-2">
-                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Skill Matrix</h3>
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                  {topSkills.map((s) => s.label.split(' ')[0]).join(' · ')}
-                </span>
-              </div>
-              <div className="relative flex-1 min-h-[200px]">
-                <SkillRadar skills={skills} />
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {topSkills.map((s, i) => (
-                  <span key={s.label} className={`px-2 py-0.5 rounded-md text-[11px] font-bold ${skillBadgeColors[i % skillBadgeColors.length]}`}>
-                    {s.label} {s.value}
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Track Progress</h3>
+                {hasSkillData && (
+                  <span className="text-[12px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
+                    {topSkills.map((s) => String(s.label).split(' ')[0]).join(' · ')}
                   </span>
-                ))}
+                )}
               </div>
+              {hasSkillData ? (
+                <>
+                  <div className="relative flex-1 min-h-[200px]">
+                    <SkillRadar skills={skills} />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {topSkills.map((s, i) => (
+                      <span key={s.label} className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${skillBadgeColors[i % skillBadgeColors.length]}`}>
+                        {s.label} {s.value}%
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="flex-1 min-h-[200px] grid place-items-center text-center px-4">
+                  <div className="space-y-2">
+                    <BarChart3 className="mx-auto text-slate-300 dark:text-slate-600" size={30} aria-hidden="true" />
+                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300">No progress yet</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed max-w-xs">
+                      Start any course and your per-track completion will chart here.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -494,6 +534,9 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* ── Internship Applications (student's own) ────────────────── */}
+          <MyInternshipApplications />
+
           {/* ── Courses / Training Tracks Grid ─────────────────────────── */}
           <div className="space-y-6">
             <div className="flex items-center justify-between gap-3">
@@ -501,7 +544,23 @@ const Dashboard = () => {
               <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
             </div>
 
-            {courses.length === 0 ? (
+            {coursesError ? (
+              <div className="rounded-3xl border border-red-300 dark:border-red-800 bg-red-50/60 dark:bg-red-950/20 py-14 px-6 text-center space-y-4" role="status" aria-label="Failed to load courses">
+                <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-500/10 text-red-500 dark:text-red-400">
+                  <AlertTriangle size={24} />
+                </span>
+                <div className="space-y-1">
+                  <h3 className="font-black text-slate-900 dark:text-white">Failed to Load Courses</h3>
+                  <p className="text-sm text-red-600 dark:text-red-400 max-w-md mx-auto">{coursesError}</p>
+                </div>
+                <button
+                  onClick={() => refetchCourses()}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-colors"
+                >
+                  <RefreshCw size={14} /> Retry
+                </button>
+              </div>
+            ) : courses.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/30 py-14 px-6 text-center space-y-4">
                 <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400">
                   <BookOpen size={24} />
@@ -513,7 +572,7 @@ const Dashboard = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => window.location.reload()}
+                  onClick={() => refetchCourses()}
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-colors"
                 >
                   <RefreshCw size={14} /> Refresh
@@ -540,6 +599,7 @@ const Dashboard = () => {
                       barColor={metadata.barColor}
                       progress={progressInfo.progress}
                       weekCompleted={progressInfo.weekCompleted}
+                      totalWeeks={course.modules?.length}
                       completed={progressInfo.completed}
                       type="dashboard"
                       onAction={(id) => navigate(`/course/${id}`)}
@@ -624,7 +684,7 @@ const Dashboard = () => {
           <div className="p-6 bg-slate-900/40 border border-slate-800 rounded-3xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
             <div className="max-w-2xl space-y-3">
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-black uppercase tracking-wider text-emerald-400">
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[12px] font-black uppercase tracking-wider text-emerald-400">
                 Referral Program
               </span>
               <h3 className="text-2xl font-black text-white uppercase italic">Invite Friends, Learn For Free</h3>
@@ -637,7 +697,7 @@ const Dashboard = () => {
           {/* Referral Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Your Referral Code</span>
+              <span className="text-[12px] font-black uppercase tracking-wider text-slate-500">Your Referral Code</span>
               <div className="flex items-center justify-between gap-3 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-850">
                 <span className="font-mono text-xs font-bold text-white">{user?.referralCode || 'Generating...'}</span>
                 <button
@@ -649,7 +709,7 @@ const Dashboard = () => {
                         .catch(() => addToast('Could not copy. Clipboard permission denied.', 'error'));
                     }
                   }}
-                  className="text-[11px] text-blue-400 hover:text-blue-300 font-extrabold uppercase transition"
+                  className="text-[12px] text-blue-400 hover:text-blue-300 font-extrabold uppercase transition"
                 >
                   Copy
                 </button>
@@ -657,7 +717,7 @@ const Dashboard = () => {
             </div>
 
             <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Your Invite Link</span>
+              <span className="text-[12px] font-black uppercase tracking-wider text-slate-500">Your Invite Link</span>
               <div className="flex items-center justify-between gap-3 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-850">
                 <span className="font-mono text-xs font-bold text-white truncate max-w-[150px]">
                   {window.location.origin}/register?ref={user?.referralCode}
@@ -671,7 +731,7 @@ const Dashboard = () => {
                         .catch(() => addToast('Could not copy. Clipboard permission denied.', 'error'));
                     }
                   }}
-                  className="text-[11px] text-blue-400 hover:text-blue-300 font-extrabold uppercase transition"
+                  className="text-[12px] text-blue-400 hover:text-blue-300 font-extrabold uppercase transition"
                 >
                   Copy Link
                 </button>
@@ -681,17 +741,17 @@ const Dashboard = () => {
             <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex flex-wrap items-center gap-6 w-full md:w-auto text-left">
                 <div>
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">Referred Registrations</span>
+                  <span className="text-[12px] font-black uppercase tracking-wider text-slate-500 block">Referred Registrations</span>
                   <h3 className="text-2xl font-black text-emerald-400 mt-1">{user?.referralCount || 0} <span className="text-xs text-slate-500 font-normal">/ 15</span></h3>
                 </div>
                 <div className="border-l border-slate-800 h-10 hidden md:block"></div>
                 <div>
-                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">Referred Payments</span>
+                  <span className="text-[12px] font-black uppercase tracking-wider text-slate-500 block">Referred Payments</span>
                   <h3 className="text-2xl font-black text-cyan-400 mt-1">{user?.referralPaidCount || 0} <span className="text-xs text-slate-500 font-normal">/ 5</span></h3>
                 </div>
               </div>
               <div className="text-right w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-slate-850">
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">Referral Status</span>
+                <span className="text-[12px] font-black uppercase tracking-wider text-slate-500 block">Referral Status</span>
                 <h3 className={`text-lg font-black mt-1 ${user?.referralSuccess ? 'text-green-400' : 'text-amber-400'}`}>
                   {user?.referralSuccess ? "SUCCESSFUL (100% OFF)" : "IN PROGRESS (0% OFF)"}
                 </h3>
@@ -726,16 +786,16 @@ const Dashboard = () => {
                   <div key={idx} className="p-4 bg-slate-950/40 border border-slate-850 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-black uppercase ${isCompleted ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500'}`}>
+                        <span className={`px-2 py-0.5 rounded text-[12px] font-black uppercase ${isCompleted ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800 text-slate-500'}`}>
                           {isCompleted ? "✓ Completed" : `Needs ${tier.target - tier.current} more`}
                         </span>
                         <h5 className="text-xs font-bold text-white">{tier.label}</h5>
                       </div>
-                      <p className="text-[11px] text-slate-500">{tier.desc}</p>
+                      <p className="text-[12px] text-slate-500">{tier.desc}</p>
                     </div>
 
                     <div className="w-full md:w-1/3 space-y-1 shrink-0">
-                      <div className="flex justify-between items-center text-[11px] font-black uppercase text-slate-500">
+                      <div className="flex justify-between items-center text-[12px] font-black uppercase text-slate-500">
                         <span>Target: {tier.target} Users</span>
                         <span className="font-mono">{tier.current} / {tier.target}</span>
                       </div>

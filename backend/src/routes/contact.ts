@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
 import { authenticateToken, isAdmin } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
+import { validate, contactMessageSchema } from '../middleware/validation';
 
 const router = Router();
 
@@ -30,13 +32,11 @@ router.get('/settings', async (req: Request, res: Response, next: NextFunction) 
 });
 
 // POST /api/contact - Submit a contact message (Public)
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+// Public and unauthenticated: rate-limited and schema-validated so the admin
+// inbox cannot be flooded with rows or oversized payloads.
+router.post('/', rateLimiter(5, 300_000), validate(contactMessageSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, email, subject, message } = req.body;
-
-    if (!name || !email || !message) {
-      return res.status(400).json({ message: 'Name, email, and message are required fields.' });
-    }
 
     const newMessage = await prisma.contactMessage.create({
       data: {

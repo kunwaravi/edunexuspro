@@ -15,11 +15,16 @@ setInterval(() => {
 
 export const rateLimiter = (limit: number, windowMs: number) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const ip = (req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown') as string;
-    // Key on ip + route path so each endpoint (register, login, forgot/reset) gets its
-    // OWN budget. A single shared IP-only key would let requests to one route consume
-    // another route's quota (e.g. 10 login attempts exhausting the 5/5min register limit).
-    const key = `${ip}:${req.baseUrl}${req.path}`;
+    // SECURITY: never fall back to the client-controlled X-Forwarded-For header —
+    // a caller could rotate it and bypass the limiter entirely. req.ip respects
+    // the trust-proxy setting (see index.ts) and is the only trustworthy source.
+    const ip = (req.ip || req.socket.remoteAddress || 'unknown') as string;
+    // Key on ip + ROUTE PATTERN (e.g. /verify/:credentialId), not the concrete
+    // path, so each endpoint gets its own budget while dynamic segments share one:
+    // keying on the concrete path gave every credential/challenge id a fresh
+    // budget, which made enumeration and brute-force per id unthrottled.
+    const routePath = (req as any).route?.path || req.path;
+    const key = `${ip}:${req.baseUrl}${routePath}`;
     const now = Date.now();
     const record = rateLimitStore.get(key);
 

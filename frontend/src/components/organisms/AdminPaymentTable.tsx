@@ -139,11 +139,11 @@ const AdminPaymentTable: React.FC<AdminPaymentTableProps> = ({ transactions, loa
         </h3>
         <div className="flex items-center gap-2">
           {pendingCount > 0 && (
-            <span className="text-[11px] bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full text-amber-400 font-bold animate-pulse">
+            <span className="text-[12px] bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full text-amber-400 font-bold animate-pulse">
               {pendingCount} Awaiting Verification
             </span>
           )}
-          <span className="text-[11px] bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-slate-400 font-bold">
+          <span className="text-[12px] bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-slate-400 font-bold">
             {transactions.length} Total Records
           </span>
         </div>
@@ -155,7 +155,7 @@ const AdminPaymentTable: React.FC<AdminPaymentTableProps> = ({ transactions, loa
         <div className="py-12 text-center space-y-2">
           <Inbox size={28} className="mx-auto text-slate-700" />
           <p className="text-slate-500 text-xs font-bold">No payment records found.</p>
-          <p className="text-[11px] text-slate-600">New student enrollments will appear here for verification.</p>
+          <p className="text-[12px] text-slate-600">New student enrollments will appear here for verification.</p>
         </div>
       ) : (
         <Table className="text-xs">
@@ -180,19 +180,19 @@ const AdminPaymentTable: React.FC<AdminPaymentTableProps> = ({ transactions, loa
 
                 return (
                   <TableRow key={idx} className={`hover:bg-slate-900/40 text-slate-300 transition ${isAwaitingVerify ? 'bg-amber-500/3' : ''}`}>
-                    <TableCell className="py-3.5 px-4 font-mono text-[11px] text-cyan-400 max-w-[120px] truncate">{t.id}</TableCell>
+                    <TableCell className="py-3.5 px-4 font-mono text-[12px] text-cyan-400 max-w-[120px] truncate">{t.id}</TableCell>
                     <TableCell className="py-3.5 px-4">
                       <div className="font-bold text-white">{t.user?.name}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{t.user?.email}</div>
+                      <div className="text-[12px] text-slate-500 font-mono">{t.user?.email}</div>
                     </TableCell>
                     <TableCell className="py-3.5 px-4 font-bold uppercase">{t.courseId}</TableCell>
                     <TableCell className="py-3.5 px-4 text-emerald-400 font-black">₹{t.amount}</TableCell>
                     <TableCell className="py-3.5 px-4">
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-black uppercase ${cfg.color}`}>
+                      <span className={`px-2 py-0.5 rounded text-[12px] font-black uppercase ${cfg.color}`}>
                         {cfg.icon}{cfg.label}
                       </span>
                     </TableCell>
-                    <TableCell className="py-3.5 px-4 font-mono text-slate-450 text-[11px]">{t.reference || '—'}</TableCell>
+                    <TableCell className="py-3.5 px-4 font-mono text-slate-450 text-[12px]">{t.reference || '—'}</TableCell>
                     <TableCell className="py-3.5 px-4 text-slate-500 font-mono">{new Date(t.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="py-3.5 px-4 text-right flex items-center justify-end gap-2">
                       {isAwaitingVerify ? (
@@ -200,7 +200,7 @@ const AdminPaymentTable: React.FC<AdminPaymentTableProps> = ({ transactions, loa
                           <button
                             onClick={() => handleVerify(t.id, t.user?.name)}
                             disabled={isVerifying || isDeleting}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 hover:border-emerald-500/60 text-emerald-400 rounded-lg text-[11px] font-black uppercase transition active:scale-95 disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 hover:border-emerald-500/60 text-emerald-400 rounded-lg text-[12px] font-black uppercase transition active:scale-95 disabled:opacity-50"
                           >
                             <ShieldCheck size={12} />
                             {isVerifying ? 'Verifying...' : 'Verify Now'}
@@ -230,7 +230,7 @@ const AdminPaymentTable: React.FC<AdminPaymentTableProps> = ({ transactions, loa
                             href={`/certificate?courseId=${encodeURIComponent(t.courseId)}&userId=${t.user.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-400 rounded-lg text-[11px] font-bold uppercase transition"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-400 rounded-lg text-[12px] font-bold uppercase transition"
                           >
                             View Certificate
                           </a>

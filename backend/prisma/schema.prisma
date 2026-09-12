@@ -43,6 +43,8 @@ model User {
   progresses        CourseProgress[]
   discussions       Discussion[]
   comments          ForumComment[]
+  enrollments       Enrollment[]
+  internshipApplications InternshipApplication[]
   moduleProgresses  ModuleProgress[]
   payments          Payment[]
   practiceAttempts  PracticeAttempt[]
@@ -83,21 +85,64 @@ model QuizResult {
   @@index([userId, courseId])
 }
 
+model Category {
+  id          Int        @id @default(autoincrement())
+  slug        String     @unique
+  name        String
+  description String?
+  parentId    Int?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryTree")
+  courses     Course[]   @relation("CourseCategory")
+  subcourses  Course[]   @relation("CourseSubcategory")
+  sortOrder   Int        @default(0)
+  isPublished Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
 model Course {
-  id                 String              @id
-  title              String
-  description        String
-  price              Int                 @default(699)
-  isPublished        Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  progresses         CourseProgress[]
-  challenges         Challenge[]
-  finalExamQuestions FinalExamQuestion[]
-  modules            Module[]
-  payments           Payment[]
-  projectSubmissions ProjectSubmission[]
-  results            QuizResult[]
+  id                  String              @id
+  title               String
+  description         String
+  price               Int                 @default(699)
+  isPublished         Boolean             @default(true)
+  // --- Phase 1: Dynamic Course Catalog (additive, backward-compatible) ---
+  slug                String?             @unique
+  shortTitle          String?
+  shortDescription    String?
+  categoryId          Int?
+  subcategoryId       Int?
+  category            Category?           @relation("CourseCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  subcategory         Category?           @relation("CourseSubcategory", fields: [subcategoryId], references: [id], onDelete: SetNull)
+  courseType          String?
+  difficulty          String?
+  duration            String?
+  language            String?
+  instructor          String?
+  thumbnail           String?
+  banner              String?
+  status              String              @default("PUBLISHED")
+  certificateAvailable Boolean            @default(true)
+  prerequisites       String[]            @default([])
+  learningOutcomes    String[]            @default([])
+  targetAudience      String[]            @default([])
+  skillsGained        String[]            @default([])
+  tags                String[]            @default([])
+  featured            Boolean             @default(false)
+  // TASK 6: admin-controlled "Coming Soon" state. When true the course stays
+  // visible in the catalog but its CTA is disabled (no availability implied).
+  comingSoon          Boolean             @default(false)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  progresses          CourseProgress[]
+  challenges          Challenge[]
+  enrollments         Enrollment[]
+  finalExamQuestions  FinalExamQuestion[]
+  modules             Module[]
+  payments            Payment[]
+  projectSubmissions  ProjectSubmission[]
+  results             QuizResult[]
 }
 
 model Module {
@@ -165,6 +210,28 @@ model Payment {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, courseId])
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  // userId is Int (not String) to match User.id Int — the FK must reference
+  // the actual User primary key type.
+  userId     Int
+  courseId   String
+  // Access states: ACTIVE = learning access; SUSPENDED / EXPIRED = no premium
+  // access. String (not enum) to match the project's convention (issue #77).
+  status     String   @default("ACTIVE")
+  enrolledAt DateTime @default(now())
+  source     String?  // e.g. "PAYMENT" (backfilled from verified payments)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@index([userId, status])
 }
 
 model Project {
@@ -414,4 +481,64 @@ model ChallengeProgress {
   @@unique([userId, challengeId])
   @@index([userId, courseId])
   @@index([userId, moduleId])
+}
+
+model InternshipProgram {
+  id           Int                     @id @default(autoincrement())
+  slug         String                  @unique
+  title        String
+  description  String
+  // Links to an existing Course Category slug. Kept a plain String (not an FK):
+  // the category taxonomy is owned by the course catalog, and an internship
+  // program must not pin or be pinned by category edits.
+  categorySlug String?
+  duration     String
+  // "Remote" | "Onsite" | "Hybrid" — String (not enum), matching the project
+  // convention for role/status-like fields (issue #77).
+  mode         String
+  // Closed programs stay in the DB for existing applications; they simply stop
+  // being listed publicly.
+  isOpen       Boolean                 @default(true)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  applications InternshipApplication[]
+}
+
+model InternshipApplication {
+  id                  Int               @id @default(autoincrement())
+  // Human-readable reference shown to the student, e.g. "INT-2026-0001".
+  applicationCode     String            @unique
+  userId              Int
+  programId           Int
+  fullName            String
+  email               String
+  phone               String?
+  qualification       String
+  skills              String
+  introduction        String
+  portfolioUrl        String?
+  message             String?
+  // Workflow state: PENDING | UNDER_REVIEW | APPROVED | REJECTED | NEED_MORE_INFO.
+  // String (not enum), matching the project convention (issue #77).
+  status              String            @default("PENDING")
+  adminResponse       String?
+  // Delivery state of the response email: NOT_SENT | SENT | FAILED.
+  // LOGICALLY SEPARATE from `status` — a decision is recorded and auditable even
+  // when the notification email is unconfigured or fails to send, so the two
+  // must never be conflated into one "responded" flag.
+  responseEmailStatus String            @default("NOT_SENT")
+  respondedAt         DateTime?
+  // Admin User.id that responded. Deliberately a plain id, not a relation: the
+  // audit trail only needs the id, and a second User relation would add a
+  // second named edge on User for no query benefit.
+  respondedBy         Int?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program InternshipProgram @relation(fields: [programId], references: [id])
+
+  @@index([userId])
+  @@index([programId])
+  @@index([status])
 }

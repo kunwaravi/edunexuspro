@@ -1,0 +1,274 @@
+[
+  {
+    "id": "ThreeDCAD",
+    "slug": "3d-cad",
+    "license": "CC0",
+    "artist": "a href=//commons.wikimedia.org/w/index.php?title=User:Kurt_Kaiser&amp;action=edit&amp;redlink=1 clas",
+    "desc": "https://commons.wikimedia.org/wiki/File:Blender_3D_Models_of_Low_Poly_Box_Trucks.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Blender_3D_Models_of_Low_Poly_Box_Trucks.png/1280px-Blender_3D_Models_of_Low_Poly_Box_Trucks.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "Arduino",
+    "slug": "arduino",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Arduino_Uno_board.jpg/1280px-Arduino_Uno_board.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC0",
+    "artist": "ahref=//commons.wikimedia.org/wiki/User:JrawXtitle=User:JrawXJrawX/a",
+    "desc": "https://commons.wikimedia.org/wiki/File:Arduino_Uno_board.jpg"
+  },
+  {
+    "id": "AutoCAD2D",
+    "slug": "autocad-2d",
+    "license": "Public domain",
+    "artist": "Department of Homeland Security. U.S. Coast Guard. 3/1/2003",
+    "desc": "https://commons.wikimedia.org/wiki/File:Engineering_Drawing_-_DPLA_-_59e24d60504c221e45a8c0ffcaaae870.tiff",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Engineering_Drawing_-_DPLA_-_59e24d60504c221e45a8c0ffcaaae870.tiff/lossy-page1-1280px-Engineering_Drawing_-_DPLA_-_59e24d60504c221e45a8c0ffcaaae870.tiff.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "BasicElectronics",
+    "slug": "basic-electronics",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Componentes.JPG/1280px-Componentes.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "Public domain",
+    "artist": "ahref=//commons.wikimedia.org/wiki/User:Kaetitle=User:KaeKae/a",
+    "desc": "https://commons.wikimedia.org/wiki/File:Componentes.JPG"
+  },
+  {
+    "id": "C",
+    "slug": "c",
+    "license": "Public domain",
+    "artist": "Microsoft",
+    "desc": "https://commons.wikimedia.org/wiki/File:VS_Code_(Insiders).png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/VS_Code_%28Insiders%29.png/1280px-VS_Code_%28Insiders%29.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "CADDED_Civil",
+    "slug": "cadded-civil",
+    "license": "Public domain",
+    "artist": "HAER / Fairchild AFB",
+    "desc": "https://commons.wikimedia.org/wiki/File:Photocopy_of_engineering_drawing,_May,_1941_(original_drawing_located_at_Fairchild_Air_Force_Base,_Civil_Engineering_Building,_Civil_Engineering_vault)._ENGINE_TEST_CELL_HAER_WASH,32-SPOK.V,1A-20.tif",
+    "source": "seed"
+  },
+  {
+    "id": "CADDED_Mech",
+    "slug": "cadded-mech",
+    "license": "CC BY 4.0",
+    "artist": "M. D. Lebedev",
+    "desc": "https://commons.wikimedia.org/wiki/File:Involute_Spur_Gears_External_Meshing_with_Velocity_Vectors.gif",
+    "source": "seed"
+  },
+  {
+    "id": "ComputerFundamentals",
+    "slug": "computer-fundamentals",
+    "license": "CC0",
+    "artist": "Jeff Sheldon (Unsplash)",
+    "desc": "https://commons.wikimedia.org/wiki/File:Overhead_desktop_workspace_(Unsplash).jpg",
+    "source": "seed"
+  },
+  {
+    "id": "C++",
+    "slug": "cpp",
+    "license": "CC0",
+    "artist": "a href=//commons.wikimedia.org/w/index.php?title=User:Squeebis&amp;action=edit&amp;redlink=1 class=n",
+    "desc": "https://commons.wikimedia.org/wiki/File:C%2B%2B_Code.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/C%2B%2B_Code.png/1280px-C%2B%2B_Code.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "DigitalElectronics",
+    "slug": "digital-electronics",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Wafer_scale_chip.webp/1280px-Wafer_scale_chip.webp.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC0",
+    "artist": "ahref=//commons.wikimedia.org/wiki/User:Wikideas1title=User:Wikideas1Wikideas1/a",
+    "desc": "https://commons.wikimedia.org/wiki/File:Wafer_scale_chip.webp"
+  },
+  {
+    "id": "DSA",
+    "slug": "dsa",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/New_Flowchart_Notation_sample.jpg/1280px-New_Flowchart_Notation_sample.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC BY-SA 4.0",
+    "artist": "ahref=//commons.wikimedia.org/w/index.php?title=User:Biancashouse&amp;action=edit&amp;redlink=1class=newtitle=User:Bianc",
+    "desc": "https://commons.wikimedia.org/wiki/File:New_Flowchart_Notation_sample.jpg"
+  },
+  {
+    "id": "Embedded",
+    "slug": "embedded",
+    "license": "Public domain",
+    "artist": "Mike1024",
+    "desc": "https://commons.wikimedia.org/wiki/File:ADSL_modem_router_internals_labeled.jpg",
+    "source": "seed"
+  },
+  {
+    "id": "EmbeddedC",
+    "slug": "embedded-c",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Yamaha_LM6405G-1911_controller_by_Sanyo.jpg/1280px-Yamaha_LM6405G-1911_controller_by_Sanyo.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC0",
+    "artist": "ahref=//commons.wikimedia.org/w/index.php?title=User:Retired_electrician&amp;action=edit&amp;redlink=1class=newtitle=Use",
+    "desc": "https://commons.wikimedia.org/wiki/File:Yamaha_LM6405G-1911_controller_by_Sanyo.jpg"
+  },
+  {
+    "id": "ESP32",
+    "slug": "esp32",
+    "license": "CC0",
+    "artist": "Ubahnverleih",
+    "desc": "https://commons.wikimedia.org/wiki/File:ESP32_on_Lolin32_Lite_clone_board_cropped.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/ESP32_on_Lolin32_Lite_clone_board_cropped.jpg/1280px-ESP32_on_Lolin32_Lite_clone_board_cropped.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "FullStackWeb",
+    "slug": "full-stack-web",
+    "license": "CC0",
+    "artist": "a href=//commons.wikimedia.org/w/index.php?title=User:Cycling2&amp;action=edit&amp;redlink=1 class=n",
+    "desc": "https://commons.wikimedia.org/wiki/File:VS_Code_Screenshot.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/VS_Code_Screenshot.png/1280px-VS_Code_Screenshot.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "HTMLCSS",
+    "slug": "html-css",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/5/58/Konquerormp.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "license": "CC BY-SA 4.0",
+    "artist": "Theoriginaluploaderwasahref=https://en.wikipedia.org/wiki/User:Ugen64class=extiwtitle=wikipedia:User:Ugen64Ugen64/aatahr",
+    "desc": "https://commons.wikimedia.org/wiki/File:Konquerormp.png"
+  },
+  {
+    "id": "IoT",
+    "slug": "iot",
+    "license": "CC BY 2.0",
+    "artist": "Center for Data Innovation (Flickr)",
+    "desc": "https://commons.wikimedia.org/wiki/File:Internet_of_Things_2014_Conference_(15330239504).jpg",
+    "source": "seed"
+  },
+  {
+    "id": "ITICOPA",
+    "slug": "iti-copa",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Hands-desk-office-working_%2824326654535%29.jpg/1280px-Hands-desk-office-working_%2824326654535%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC0",
+    "artist": "arel=nofollowclass=externaltexthref=https://www.flickr.com/people/137643065@N06www.Pixel.laFreeStockPhotos/a",
+    "desc": "https://commons.wikimedia.org/wiki/File:Hands-desk-office-working_(24326654535).jpg"
+  },
+  {
+    "id": "ITIElectrician",
+    "slug": "iti-electrician",
+    "license": "CC0",
+    "artist": "Wikimedia Commons",
+    "desc": "https://commons.wikimedia.org/wiki/File:Electricians_fixing_electricity_meter_5.jpg",
+    "source": "seed"
+  },
+  {
+    "id": "ITIFitter",
+    "slug": "iti-fitter",
+    "license": "Public domain",
+    "artist": "ATLIB / Alexander Turnbull Library",
+    "desc": "https://commons.wikimedia.org/wiki/File:Machine_workshop,_railway_workshops,_Petone_ATLIB_178942.png",
+    "source": "seed"
+  },
+  {
+    "id": "Java",
+    "slug": "java",
+    "license": "CC BY-SA 4.0",
+    "artist": "a href=//commons.wikimedia.org/wiki/User:Tanaka200 title=User:Tanaka200Tanaka200/a",
+    "desc": "https://commons.wikimedia.org/wiki/File:Java_source_code.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Java_source_code.png/1280px-Java_source_code.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "JavaScript",
+    "slug": "javascript",
+    "license": "CC BY-SA 4.0",
+    "artist": "Martin Vorel",
+    "desc": "https://commons.wikimedia.org/wiki/File:Programming_code.jpg",
+    "source": "seed"
+  },
+  {
+    "id": "Linux",
+    "slug": "linux",
+    "license": "CC BY-SA 4.0",
+    "artist": "Screenshot taken by a href=//commons.wikimedia.org/wiki/User:Vitaly_Zdanevich title=User:Vitaly Zdan",
+    "desc": "https://commons.wikimedia.org/wiki/File:Gentoo-sway-window-manager.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Gentoo-sway-window-manager.png/1280px-Gentoo-sway-window-manager.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "Microcontrollers",
+    "slug": "microcontrollers",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Embedded_World_2014_Arch_Pro_Developer_Board_%2803%29.jpg/1280px-Embedded_World_2014_Arch_Pro_Developer_Board_%2803%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC0",
+    "artist": "ahref=//commons.wikimedia.org/wiki/User:Ordercrazytitle=User:OrdercrazyOrdercrazy/a",
+    "desc": "https://commons.wikimedia.org/wiki/File:Embedded_World_2014_Arch_Pro_Developer_Board_(03).jpg"
+  },
+  {
+    "id": "MSExcel",
+    "slug": "ms-excel",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/SUM_formula_in_LibreOffice_Calc.png/1280px-SUM_formula_in_LibreOffice_Calc.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC0",
+    "artist": "ahref=//commons.wikimedia.org/wiki/User:Arlo_Barnestitle=User:ArloBarnesArloBarnes/a",
+    "desc": "https://commons.wikimedia.org/wiki/File:SUM_formula_in_LibreOffice_Calc.png"
+  },
+  {
+    "id": "MSPowerPoint",
+    "slug": "ms-powerpoint",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Libreoffice-impress.png/1280px-Libreoffice-impress.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC0",
+    "artist": "Wikimedia Commons",
+    "desc": "https://commons.wikimedia.org/wiki/File:Libreoffice-impress.png"
+  },
+  {
+    "id": "MSWord",
+    "slug": "ms-word",
+    "license": "CC BY-SA 4.0",
+    "artist": "a href=//commons.wikimedia.org/wiki/User:%E0%A6%AA%E0%A6%BE%E0%A6%AA%E0%A7%B0%E0%A6%BF_%E0%A6%AC%E0%",
+    "desc": "https://commons.wikimedia.org/wiki/File:Vintage_Typewriter.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Vintage_Typewriter.jpg/1280px-Vintage_Typewriter.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "Networking",
+    "slug": "networking",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Raspberry_Pi_4_on_a_network_switch.jpg/1280px-Raspberry_Pi_4_on_a_network_switch.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "CC0",
+    "artist": "bahref=//commons.wikimedia.org/wiki/User:Rail01title=User:Rail01railfox/a/b(spanclass=plainlinksarel=nofollowclass=exter",
+    "desc": "https://commons.wikimedia.org/wiki/File:Raspberry_Pi_4_on_a_network_switch.jpg"
+  },
+  {
+    "id": "NodeJS",
+    "slug": "node-js",
+    "license": "CC BY 4.0",
+    "artist": "NOIRLab/NSF/AURA/T. Slovinsk\u00fd",
+    "desc": "https://commons.wikimedia.org/wiki/File:NOIRLab_HQ_Server_Racks_(6V6A0375-CC).jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/NOIRLab_HQ_Server_Racks_%286V6A0375-CC%29.jpg/1280px-NOIRLab_HQ_Server_Racks_%286V6A0375-CC%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "PCBDesign",
+    "slug": "pcb-design",
+    "license": "CC0",
+    "artist": "Wikimedia Commons",
+    "desc": "https://commons.wikimedia.org/wiki/File:Circuit_board_with_protective_layer_ready_for_etching.jpg",
+    "source": "seed"
+  },
+  {
+    "id": "Python",
+    "slug": "python",
+    "license": "CC BY-SA 4.0",
+    "artist": "Wikimedia Commons",
+    "desc": "https://commons.wikimedia.org/wiki/File:Screen-python-code-matplotlib-physics-simulation.jpg",
+    "source": "seed"
+  },
+  {
+    "id": "React",
+    "slug": "react",
+    "license": "CC0",
+    "artist": "Jens Kreuter a rel=nofollow class=external text href=https://unsplash.com/@jenskreuterjenskreuter/a",
+    "desc": "https://commons.wikimedia.org/wiki/File:Online_store_on_a_screen_(Unsplash).jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Online_store_on_a_screen_%28Unsplash%29.jpg/1280px-Online_store_on_a_screen_%28Unsplash%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  {
+    "id": "SQL",
+    "slug": "sql",
+    "license": "CC0",
+    "artist": "US DOE NERSC",
+    "desc": "https://commons.wikimedia.org/wiki/File:Technician_with_laptop_working_on_server_rack_at_NERSC.jpg",
+    "source": "seed"
+  },
+  {
+    "id": "WebDesign",
+    "slug": "web-design",
+    "license": "CC BY-SA 4.0",
+    "artist": "Wikipedia contributors, Mediawiki developers",
+    "desc": "https://commons.wikimedia.org/wiki/File:Visual_editor_screen_-el_(istoria_tis_viologias).png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Visual_editor_screen_-el_%28istoria_tis_viologias%29.png/1280px-Visual_editor_screen_-el_%28istoria_tis_viologias%29.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  }
+]
