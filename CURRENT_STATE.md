@@ -49,9 +49,14 @@
   category links backfilled. Payments/enrollments/certificates unchanged (14/14/33).
 - Live: category chips All / Programming (4) / Web Development (1) / IoT (1) /
   Embedded Systems (1) / CAD & Design (2), every chip returns results.
-- Home popup now shows `frontend/public/diwali-offer-2026.jpeg` (owner-supplied poster).
-  **Note:** the poster says "30% OFF" while the coupons are ₹500 off ₹2,000 (25%) and
-  ₹250 off (12.5%) — poster copy needs correcting.
+- Home popup shows `frontend/public/diwali-offer-2026.jpeg` (owner-supplied poster).
+- **Popup rework — deployed 2026-10-28 (commit `896b150`):** owner replaced the poster with a
+  corrected **25% OFF** artwork (₹2,000 → ₹1,500 / ₹1,750), so the earlier poster/coupon
+  mismatch is resolved. The popup is now centered on mobile + desktop (was bottom-anchored on
+  mobile), has no localStorage frequency cap (it shows on every visit; close is per-view only),
+  and its accessible close button sits exactly on the X drawn in the poster artwork.
+  Live verification: 14/14 Playwright checks at 1440×900 and 390×844; served poster md5
+  `9001cb39…` matches the repo file.
 
 ## Known Issues
 - Course banners silently 404→index.html on prod (frontend fallback visual masks it) until nginx fix deploys.
