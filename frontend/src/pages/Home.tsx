@@ -23,6 +23,7 @@ import FormField from '../components/molecules/FormField';
 import Card from '../components/atoms/Card';
 import PageContainer from '../components/layout/PageContainer';
 import CourseCard from '../components/molecules/CourseCard';
+import DiwaliOfferPopup from '../components/molecules/DiwaliOfferPopup';
 import { coursesConfig } from '../config/courses';
 import { useCourses } from '../hooks/useCourses';
 import { scrollToId } from '../lib/motion';
@@ -1196,6 +1197,9 @@ const Home = () => {
         </>
         )}
       </Dialog>
+
+      {/* Diwali offer — Home only, dismissible, never shown during checkout. */}
+      <DiwaliOfferPopup />
 
     </PageContainer>
   );

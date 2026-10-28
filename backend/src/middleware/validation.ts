@@ -137,6 +137,14 @@ export const verifyPaymentSchema = z.object({
   }),
 });
 
+// Diwali coupon preview — authenticated, does not create a Payment.
+export const couponValidateSchema = z.object({
+  body: z.object({
+    courseId: z.string().min(1),
+    couponCode: z.string().trim().min(1).max(64),
+  }),
+});
+
 // --- Internship applications -------------------------------------------------
 // Optional fields are the ones a form leaves blank: an empty string is accepted
 // and stored as NULL rather than rejected, so a blank text input is not an error.

@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import * as paymentService from '../services/paymentService';
+import { quoteCoupon } from '../services/couponService';
 import { authenticateToken, isAdmin } from '../middleware/auth';
-import { validate, createOrderSchema, verifyPaymentSchema } from '../middleware/validation';
+import { validate, createOrderSchema, verifyPaymentSchema, couponValidateSchema } from '../middleware/validation';
 import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
@@ -88,6 +89,27 @@ router.get('/status/:courseId', authenticateToken, async (req: any, res: any, ne
       paid: !!payment,
       payment,
       pending: pendingPayment ? { id: pendingPayment.id, status: pendingPayment.status } : null
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/payments/coupon/validate - Preview a coupon against the server
+// price. Read-only: no Payment, no reservation, no lifecycle change.
+router.post('/coupon/validate', authenticateToken, rateLimiter(20, 60_000), validate(couponValidateSchema), async (req: any, res: any, next: any) => {
+  try {
+    const quote = await quoteCoupon(req.user.id, req.body.courseId, req.body.couponCode);
+
+    // Only expose fields the checkout UI needs — never internal coupon limits.
+    res.json({
+      valid: quote.valid,
+      code: quote.code,
+      discountAmount: quote.discountAmount,
+      finalAmount: quote.finalAmount,
+      couponApplied: quote.couponApplied,
+      globallyLimited: quote.globallyLimited,
+      message: quote.message,
     });
   } catch (error) {
     next(error);

@@ -47,6 +47,7 @@ const PayPage: React.FC = () => {
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [couponError, setCouponError] = useState('');
+  const [couponChecking, setCouponChecking] = useState(false);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [upiCopied, setUpiCopied] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -111,26 +112,51 @@ const PayPage: React.FC = () => {
     };
   }, [courseIdResolved]);
 
-  const handleApplyCoupon = () => {
+  /**
+   * Validate through the backend so the displayed amount is exactly the amount
+   * the order will be created with. The coupon is only reserved later, when the
+   * student submits payment — validating never consumes it.
+   */
+  const handleApplyCoupon = async () => {
     setCouponError('');
     const code = couponCode.toUpperCase().trim();
-    if (code === 'SAVI10') {
-      setDiscount(0.1); // SECURITY (#100): was 100% off (free-cert exploit) → 10%
-      setIsCouponApplied(true);
-    } else if (code === 'AVI050') {
-      setDiscount(0.5);
-      setIsCouponApplied(true);
-    } else if (code === 'AVI030') {
-      setDiscount(0.3);
-      setIsCouponApplied(true);
-    } else if (code === 'NEXUS499' || code === 'EDU499' || code === 'SPECIAL499') {
-      // Flat ₹200 off, as a fraction of the live course price.
-      setDiscount(200 / (coursePrice || 699));
-      setIsCouponApplied(true);
-    } else {
-      setCouponError('Invalid coupon code');
+
+    if (!code) {
+      setCouponError('Please enter a coupon code.');
+      return;
+    }
+    if (coursePrice == null || coursePrice <= 0) {
+      setCouponError('Course price is still loading. Please try again.');
+      return;
+    }
+
+    setCouponChecking(true);
+    try {
+      const res = await api.post('/payments/coupon/validate', {
+        courseId: courseIdResolved,
+        couponCode: code,
+      });
+
+      if (!res.data?.valid) {
+        setDiscount(0);
+        setIsCouponApplied(false);
+        setCouponError(res.data?.message || 'Invalid coupon code');
+        return;
+      }
+
+      // The backend returns rupees; the checkout UI still works in fractions.
+      setDiscount(res.data.discountAmount / coursePrice);
+      setIsCouponApplied(!!res.data.couponApplied);
+
+      if (!res.data.couponApplied && res.data.message) {
+        addToast(res.data.message, 'info');
+      }
+    } catch (err: any) {
       setDiscount(0);
       setIsCouponApplied(false);
+      setCouponError(err.response?.data?.message || 'Could not validate coupon. Please try again.');
+    } finally {
+      setCouponChecking(false);
     }
   };
 
@@ -424,24 +450,32 @@ const PayPage: React.FC = () => {
             <input
               type="text"
               value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value)}
+              onChange={(e) => {
+                setCouponCode(e.target.value);
+                // Editing the code invalidates the previous quote; it must be
+                // re-applied before checkout can send it.
+                if (isCouponApplied) {
+                  setIsCouponApplied(false);
+                  setDiscount(0);
+                }
+                setCouponError('');
+              }}
               placeholder="Discount coupon (optional)"
               className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-400 font-mono uppercase"
             />
             <button
               type="button"
               onClick={handleApplyCoupon}
-              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black uppercase tracking-wide rounded-xl border border-slate-200 transition"
+              disabled={couponChecking}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-60 text-slate-700 text-xs font-black uppercase tracking-wide rounded-xl border border-slate-200 transition"
             >
-              Apply
+              {couponChecking ? 'Checking…' : 'Apply'}
             </button>
           </div>
           {couponError && <p className="text-[12px] text-red-600 font-bold mt-1">{couponError}</p>}
           {isCouponApplied && (
             <p className="text-[12px] text-emerald-600 font-bold mt-1">
-              {['NEXUS499', 'EDU499', 'SPECIAL499'].includes(couponCode.toUpperCase().trim())
-                ? 'Coupon Applied: course price reduced to ₹499!'
-                : `Coupon Applied: ${Math.round(discount * 100)}% OFF!`}
+              Coupon Applied: ₹{Math.round(discount * (coursePrice || 0))} OFF!
             </p>
           )}
           {referralSuccess ? (

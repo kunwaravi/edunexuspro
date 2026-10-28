@@ -2,6 +2,14 @@ import prisma from '../lib/prisma';
 import crypto from 'crypto';
 import { getReferralStats } from './authService';
 import { syncEnrollmentFromVerifiedPayment } from './enrollmentService';
+import {
+  claimCoupon,
+  consumeCouponForPayment,
+  CouponUnavailableError,
+  quoteCoupon,
+  releaseCouponForPayment,
+  releaseStaleReservations,
+} from './couponService';
 
 export const getAllPayments = async () => {
   return await prisma.payment.findMany({
@@ -87,49 +95,79 @@ export const createOrder = async (userId: number, courseId: string, amount: numb
     }
   }
 
-  // Calculate coupon discount
-  let couponDiscount = 0;
+  // Coupon quote. Database coupons (Diwali) are globally limited and are
+  // claimed atomically inside the payment transaction below. Legacy hardcoded
+  // coupons keep their previous behaviour.
+  let couponQuote: Awaited<ReturnType<typeof quoteCoupon>> | null = null;
   if (couponCode) {
-    const code = couponCode.toUpperCase().trim();
-    // SECURITY (#100): SAVI10 was a 100%-off → auto-VERIFIED money-loss exploit
-    // (same pattern as the referral exploit #68). "Save 10" → 10% off.
-    if (code === 'SAVI10') couponDiscount = 0.1;
-    else if (code === 'AVI050') couponDiscount = 0.5;
-    else if (code === 'AVI030') couponDiscount = 0.3;
-    else if (code === 'NEXUS499' || code === 'EDU499' || code === 'SPECIAL499') couponDiscount = basePrice > 0 ? 200 / basePrice : 0;
-    // SECURITY: cap coupon discount at 50% (same as the referral cap #68). A
-    // 499-coupon on a course priced ≤ ₹200 would otherwise exceed 100% off.
-    couponDiscount = Math.min(couponDiscount, 0.5);
+    // Release coupons abandoned in INITIATED checkouts > 24h ago before
+    // deciding whether this code is still available.
+    await releaseStaleReservations();
+    couponQuote = await quoteCoupon(userId, courseId, couponCode);
+
+    // An inactive/expired/used database coupon is a hard error: the student
+    // must never pay full price while believing a discount was applied.
+    if (!couponQuote.valid && couponQuote.globallyLimited) {
+      return { error: couponQuote.message || 'This coupon is not available.', status: 400 };
+    }
   }
 
-  // Calculate final discount-adjusted price (using maximum of referral or coupon discount)
-  const finalDiscount = Math.max(referralDiscount, couponDiscount);
+  const couponApplied = !!couponQuote?.valid && couponQuote.couponApplied;
+  const couponRupees = couponQuote?.valid ? couponQuote.couponDiscountAmount : 0;
+  const referralRupees = couponQuote?.referralDiscountAmount ?? Math.round(basePrice * referralDiscount);
+  const discountRupees = Math.max(referralRupees, couponApplied ? couponRupees : 0);
+  const finalDiscount = basePrice > 0 ? discountRupees / basePrice : 0;
   // Clamp so a ≥100% discount can never produce a zero/negative amount that a
   // later auto-VERIFY check could treat as "paid".
-  const finalAmount = Math.max(0, Math.round(basePrice * (1 - finalDiscount)));
+  const finalAmount = Math.max(0, basePrice - discountRupees);
 
   // Payment state machine (#100): INITIATED → PENDING → VERIFIED / FAILED.
   // SECURITY: EVERY order starts INITIATED — even a ₹0 order requires manual
   // admin verification. No coupon/discount path may auto-VERIFY payment.
   const status = 'INITIATED';
 
-  const payment = await prisma.payment.create({
-    data: {
-      userId,
-      courseId,
-      amount: finalAmount,
-      status
-    }
-  });
+  try {
+    const payment = await prisma.$transaction(async (tx) => {
+      const created = await tx.payment.create({
+        data: {
+          userId,
+          courseId,
+          amount: finalAmount,
+          status,
+          couponCode: couponApplied ? couponQuote!.code : null,
+          discountAmount: discountRupees,
+        }
+      });
 
-  return {
-    orderId: payment.id,
-    amount: payment.amount,
-    courseId: payment.courseId,
-    discountApplied: finalDiscount * 100,
-    referralCount,
-    isFree: finalAmount === 0
-  };
+      // Claim last, in the same transaction: if another checkout already used
+      // the code, this throws and the Payment row above is rolled back.
+      if (couponApplied && couponQuote?.coupon) {
+        await claimCoupon(
+          tx,
+          couponQuote.coupon.id,
+          couponQuote.coupon.maxRedemptions,
+          userId,
+          created.id
+        );
+      }
+
+      return created;
+    });
+
+    return {
+      orderId: payment.id,
+      amount: payment.amount,
+      courseId: payment.courseId,
+      discountApplied: finalDiscount * 100,
+      referralCount,
+      isFree: finalAmount === 0
+    };
+  } catch (error) {
+    if (error instanceof CouponUnavailableError) {
+      return { error: error.message, status: 400 };
+    }
+    throw error;
+  }
 };
 
 // Student submits payment proof — sets status to PENDING for admin review, or VERIFIED if free.
@@ -186,6 +224,10 @@ export const adminVerifyPayment = async (paymentId: string) => {
     data: { status: 'VERIFIED' }
   });
 
+  // The coupon is now permanently consumed. A RESERVED row may only be
+  // consumed here — never by createOrder or proof submission.
+  await consumeCouponForPayment(paymentId);
+
   // Only the VERIFIED transition activates enrollment. INITIATED / PENDING /
   // FAILED never reach this code path (adminMarkFailed never sets VERIFIED).
   await syncEnrollmentFromVerifiedPayment(payment.userId, payment.courseId);
@@ -211,6 +253,10 @@ export const adminMarkFailed = async (paymentId: string) => {
     data: { status: 'FAILED' }
   });
 
+  // Failed payment → the reserved coupon returns to the pool. Only RESERVED
+  // redemptions are released; a VERIFIED (CONSUMED) coupon stays spent.
+  await releaseCouponForPayment(paymentId);
+
   return { success: true, payment: updatedPayment };
 };
 
@@ -221,6 +267,10 @@ export const deletePayment = async (paymentId: string) => {
   });
 
   if (!payment) return { error: 'Payment not found', status: 404 };
+
+  // Release a still-reserved coupon before the cascade delete removes the
+  // redemption row. A CONSUMED coupon is untouched.
+  await releaseCouponForPayment(paymentId);
 
   await prisma.payment.delete({
     where: { id: paymentId }

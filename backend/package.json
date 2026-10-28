@@ -8,6 +8,8 @@
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "diwali:offer": "ts-node --transpile-only prisma/apply_diwali_offer.ts",
+    "diwali:offer:apply": "ts-node --transpile-only prisma/apply_diwali_offer.ts --apply",
     "seed:c:full": "ts-node prisma/reseed_c_full.ts",
     "seed:webdesign:full": "ts-node prisma/reseed_webdesign_full.ts",
     "seed:python:full": "ts-node prisma/reseed_python_full.ts",

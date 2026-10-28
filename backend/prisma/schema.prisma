@@ -43,6 +43,7 @@ model User {
   progresses        CourseProgress[]
   discussions       Discussion[]
   comments          ForumComment[]
+  couponRedemptions CouponRedemption[]
   enrollments       Enrollment[]
   internshipApplications InternshipApplication[]
   moduleProgresses  ModuleProgress[]
@@ -204,12 +205,55 @@ model Payment {
   amount        Int
   status        String   @default("PENDING")
   reference     String?
+  // Diwali offer audit fields (additive). couponCode is set only when a coupon
+  // actually reduced this payment; discountAmount is the rupee amount applied.
+  // Historical rows keep NULL / 0 and are never modified.
+  couponCode     String?
+  discountAmount Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   course        Course   @relation(fields: [courseId], references: [id])
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  couponRedemption CouponRedemption?
 
   @@index([userId, courseId])
+}
+
+// --- Diwali offer coupons (additive, 2026-10-28) ---------------------------
+// A coupon is claimed atomically by incrementing redemptionCount inside the
+// same transaction that creates the Payment. maxRedemptions = 1 enforces the
+// "each coupon can be redeemed only once globally" rule without relying on a
+// non-atomic count-then-insert.
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  description     String?
+  discountType    String   @default("FLAT") // FLAT only for now
+  discountValue   Int      // rupees for FLAT
+  active          Boolean  @default(true)
+  maxRedemptions  Int      @default(1)
+  redemptionCount Int      @default(0)
+  validFrom       DateTime?
+  validUntil      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  redemptions     CouponRedemption[]
+}
+
+model CouponRedemption {
+  id         String    @id @default(cuid())
+  couponId   String
+  userId     Int
+  paymentId  String    @unique
+  status     String    @default("RESERVED") // RESERVED | CONSUMED | RELEASED
+  reservedAt DateTime  @default(now())
+  resolvedAt DateTime?
+  coupon     Coupon    @relation(fields: [couponId], references: [id])
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment    Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([couponId, status])
+  @@index([userId])
 }
 
 model Enrollment {
