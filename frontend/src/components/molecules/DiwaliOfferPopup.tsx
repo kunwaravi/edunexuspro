@@ -1,36 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { X } from 'lucide-react';
 
 /**
  * Diwali offer popup (2026-10-28).
  *
- * Shows the official Diwali poster supplied by the business owner. Website-only
- * and dismissible:
- *  - shown on the Home page only (never during checkout),
- *  - frequency-limited to once per 24h via localStorage,
+ * Shows the official Diwali poster supplied by the business owner.
+ *  - Home page only (never during checkout),
+ *  - shown on every visit — dismissal lasts only for the current view, nothing
+ *    is persisted, so returning users see the offer again,
+ *  - centered in the viewport on mobile and desktop (never bottom-anchored),
  *  - does NOT apply a coupon automatically; the student still enters the code
  *    on the Pay page and the backend remains the source of truth.
  */
-
-const STORAGE_KEY = 'edunexus_diwali_offer_dismissed_until';
-const DISMISS_FOR_MS = 24 * 60 * 60 * 1000;
 
 const DiwaliOfferPopup: React.FC = () => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    let dismissedUntil = 0;
-    try {
-      dismissedUntil = Number(localStorage.getItem(STORAGE_KEY) || 0);
-    } catch {
-      /* private mode / storage blocked → show the popup, just don't persist */
-    }
-
-    if (Date.now() < dismissedUntil) return;
-
     // Small delay so the page paints before the overlay appears.
-    const timer = window.setTimeout(() => setOpen(true), 700);
+    const timer = window.setTimeout(() => setOpen(true), 600);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -38,7 +26,7 @@ const DiwaliOfferPopup: React.FC = () => {
     if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') dismiss();
+      if (event.key === 'Escape') setOpen(false);
     };
 
     const originalOverflow = document.body.style.overflow;
@@ -49,17 +37,9 @@ const DiwaliOfferPopup: React.FC = () => {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', onKeyDown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const dismiss = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, String(Date.now() + DISMISS_FOR_MS));
-    } catch {
-      /* ignore storage failures — dismissal still works for this view */
-    }
-    setOpen(false);
-  };
+  const dismiss = () => setOpen(false);
 
   if (!open) return null;
 
@@ -68,7 +48,7 @@ const DiwaliOfferPopup: React.FC = () => {
   // sits on top of the popup's bottom-right on mobile.
   return (
     <div
-      className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-sm px-3 pb-3 sm:px-4 sm:pb-0"
+      className="fixed inset-0 z-[10000] grid place-items-center overflow-y-auto bg-slate-950/85 px-4 py-4 backdrop-blur-sm"
       onClick={dismiss}
       role="presentation"
     >
@@ -80,54 +60,46 @@ const DiwaliOfferPopup: React.FC = () => {
         className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-amber-500/30 bg-slate-950 shadow-2xl shadow-amber-500/10"
       >
         <h2 id="diwali-offer-title" className="sr-only">
-          Diwali Special Offer — ₹2,000 course now ₹1,500 with coupon DIWALI500
+          Diwali Special Offer — 25% off all courses. ₹2,000 now ₹1,500 with coupon
+          DIWALI500, or ₹1,750 with coupon DIWALI250.
         </h2>
 
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label="Close Diwali offer"
-          className="absolute right-3 top-3 z-10 rounded-full bg-slate-950/80 border border-slate-700 p-2 text-slate-300 hover:text-white hover:border-slate-500 transition"
-        >
-          <X size={16} />
-        </button>
+        <div className="relative">
+          <Link
+            to="/courses"
+            onClick={dismiss}
+            aria-label="View the Diwali offer course catalog"
+            className="block"
+          >
+            <img
+              src="/diwali-offer-2026.jpeg"
+              alt="Diwali Special Offer: 25% off all courses. ₹2,000 now ₹1,500 with coupon DIWALI500, or ₹1,750 with coupon DIWALI250. Valid 28 October to 15 November 2026 at EduNexus Pro."
+              className="block h-auto w-full"
+              loading="eager"
+              decoding="async"
+            />
+          </Link>
 
-        <Link
-          to="/courses"
-          onClick={dismiss}
-          aria-label="View the Diwali offer course catalog"
-          className="block"
-        >
-          <img
-            src="/diwali-offer-2026.jpeg"
-            alt="Diwali Special Offer: ₹2,000 course now ₹1,500 with coupon DIWALI500, or ₹1,750 with coupon DIWALI250. Valid 28 October to 15 November 2026 at EduNexus Pro."
-            className="block w-full h-auto"
-            loading="eager"
-            decoding="async"
-          />
-        </Link>
+          {/* The poster artwork already draws its own close icon at the
+              top-right. This invisible hit target sits exactly on top of it so
+              clicking the drawn X actually closes the popup, instead of a
+              second X appearing next to it. Percentages keep it aligned at
+              every width (the poster scales proportionally). */}
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label="Close Diwali offer"
+            className="absolute left-[84%] top-[12.4%] h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full text-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          >
+            Close
+          </button>
+        </div>
 
-        <div className="border-t border-amber-500/15 px-4 py-3 sm:px-5">
-          <p className="text-[11px] leading-relaxed text-slate-500">
+        <div className="border-t border-amber-500/15 px-4 py-2.5 sm:px-5">
+          <p className="text-center text-[11px] leading-relaxed text-slate-500">
             Each coupon code can be redeemed once globally. Course access is granted only after the
             existing admin payment verification.
           </p>
-          <div className="mt-2.5 flex items-center gap-2">
-            <Link
-              to="/courses"
-              onClick={dismiss}
-              className="flex-1 rounded-xl bg-amber-500 px-4 py-2.5 text-center text-[12px] font-black uppercase tracking-wide text-slate-950 transition hover:bg-amber-400"
-            >
-              Explore Courses
-            </Link>
-            <button
-              type="button"
-              onClick={dismiss}
-              className="px-3 py-2.5 text-[12px] font-bold text-slate-500 hover:text-slate-300 transition"
-            >
-              Maybe later
-            </button>
-          </div>
         </div>
       </div>
     </div>
