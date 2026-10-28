@@ -40,10 +40,25 @@
 - Open PR #104 `fix(dialog): over-tall modals scroll internally instead of clipping` (branch `fix/internship-dialog-scroll`, open since 2026-09-04).
 - Post-deploy: run `backfill_enrollments.ts` if any new paid enrollments need access rows.
 
+## Catalog Filters + Poster Popup — 2026-10-28 (deployed, commit `0923d16`)
+- Root cause of "filter shows nothing": prod `Category` table was empty and all courses had
+  `categoryId`/`slug`/`difficulty` NULL, while the UI hardcoded ₹600/₹800 price bands.
+- Fix (frontend): filter chips are derived from the catalog; level chips only render when a
+  course has a difficulty; price chips are generated from real prices and hidden when uniform.
+- Data: ran `prisma/seed_catalog.ts` on prod — 10 categories created, 9 course slugs +
+  category links backfilled. Payments/enrollments/certificates unchanged (14/14/33).
+- Live: category chips All / Programming (4) / Web Development (1) / IoT (1) /
+  Embedded Systems (1) / CAD & Design (2), every chip returns results.
+- Home popup now shows `frontend/public/diwali-offer-2026.jpeg` (owner-supplied poster).
+  **Note:** the poster says "30% OFF" while the coupons are ₹500 off ₹2,000 (25%) and
+  ₹250 off (12.5%) — poster copy needs correcting.
+
 ## Known Issues
 - Course banners silently 404→index.html on prod (frontend fallback visual masks it) until nginx fix deploys.
 - Local DB is not Prisma-migration-managed; `migrate deploy` forbidden locally.
 - `/health` is not proxied by nginx (falls through to SPA); use `/api/*` probes instead.
+- All 9 prod courses still have `difficulty = NULL`, so the level filter stays hidden until
+  real difficulty values are set.
 
 ## Recent Decisions
 - Internship certificate console stays training-only in scope (#101/#102).
