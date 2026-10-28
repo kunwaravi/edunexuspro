@@ -16,18 +16,8 @@ import { coursesConfig } from '../config/courses';
  * results update instantly with no page reload. Category syncs to the URL
  * (`?category=<slug>`) so navbar dropdowns + back/forward work.
  */
-const LEVELS = [
-  { value: 'all', label: 'All Levels' },
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-];
-
-const PRICE_RANGES = [
-  { value: 'all', label: 'Any Price' },
-  { value: 'lt600', label: 'Under ₹600' },
-  { value: '600-800', label: '₹600 – ₹800' },
-  { value: 'gt800', label: '₹800+' },
-];
+/** ₹1,500-style grouping without relying on the runtime's default locale. */
+const formatPrice = (value: number) => new Intl.NumberFormat('en-IN').format(value);
 
 const CoursesPage = () => {
   // Always fetch the full catalog — filtering is client-side for live results.
@@ -49,17 +39,34 @@ const CoursesPage = () => {
 
   const q = search.trim().toLowerCase();
 
+  // Filter chips are derived from the catalog itself, so a chip can never lead
+  // to an empty result: a level only appears when some published course has it,
+  // and the price filter only appears when prices actually vary.
+  const availableLevels = useMemo(() => {
+    const levels = new Set<string>();
+    (courses || []).forEach((c: any) => {
+      const value = (c.difficulty || '').trim().toLowerCase();
+      if (value) levels.add(value);
+    });
+    return Array.from(levels).sort();
+  }, [courses]);
+
+  const availablePrices = useMemo(() => {
+    const prices = (courses || [])
+      .map((c: any) => Number(c.price))
+      .filter((p: number) => Number.isFinite(p) && p > 0);
+    return Array.from(new Set<number>(prices)).sort((a, b) => a - b);
+  }, [courses]);
+
+  const showLevelFilter = availableLevels.length > 0;
+  const showPriceFilter = availablePrices.length > 1;
+
   const filtered = useMemo(() => {
     const list = courses || [];
     return list.filter((c: any) => {
       if (activeCategory !== 'all' && c.category?.slug !== activeCategory) return false;
-      if (level !== 'all' && (c.difficulty || '').toLowerCase() !== level) return false;
-      if (priceRange !== 'all') {
-        const p = c.price ?? 0;
-        if (priceRange === 'lt600' && !(p < 600)) return false;
-        if (priceRange === '600-800' && !(p >= 600 && p <= 800)) return false;
-        if (priceRange === 'gt800' && !(p > 800)) return false;
-      }
+      if (level !== 'all' && (c.difficulty || '').trim().toLowerCase() !== level) return false;
+      if (priceRange !== 'all' && Number(c.price) !== Number(priceRange)) return false;
       if (certOnly && !c.certificateAvailable) return false;
       if (q) {
         const hay = [c.title, c.description, c.shortDescription, c.category?.name, c.difficulty, c.duration, ...(c.tags || [])]
@@ -155,18 +162,40 @@ const CoursesPage = () => {
         <span className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-black uppercase tracking-widest text-slate-500 shrink-0">
           <SlidersHorizontal size={13} /> Filters
         </span>
-        {LEVELS.map((l) => (
-          <button key={l.value} onClick={() => setLevel(l.value)} className={smallChipClass(level === l.value)} aria-pressed={level === l.value}>
-            {l.label}
-          </button>
-        ))}
-        <span className="w-px h-5 bg-slate-800 shrink-0" aria-hidden="true" />
-        {PRICE_RANGES.map((p) => (
-          <button key={p.value} onClick={() => setPriceRange(p.value)} className={smallChipClass(priceRange === p.value)} aria-pressed={priceRange === p.value}>
-            {p.label}
-          </button>
-        ))}
-        <span className="w-px h-5 bg-slate-800 shrink-0" aria-hidden="true" />
+        {showLevelFilter && (
+          <>
+            {[
+              { value: 'all', label: 'All Levels' },
+              ...availableLevels.map((value) => ({
+                value,
+                label: value.charAt(0).toUpperCase() + value.slice(1),
+              })),
+            ].map((l) => (
+              <button key={l.value} onClick={() => setLevel(l.value)} className={smallChipClass(level === l.value)} aria-pressed={level === l.value}>
+                {l.label}
+              </button>
+            ))}
+            <span className="w-px h-5 bg-slate-800 shrink-0" aria-hidden="true" />
+          </>
+        )}
+        {showPriceFilter && (
+          <>
+            <button onClick={() => setPriceRange('all')} className={smallChipClass(priceRange === 'all')} aria-pressed={priceRange === 'all'}>
+              Any Price
+            </button>
+            {availablePrices.map((price) => (
+              <button
+                key={price}
+                onClick={() => setPriceRange(String(price))}
+                className={smallChipClass(priceRange === String(price))}
+                aria-pressed={priceRange === String(price)}
+              >
+                ₹{formatPrice(price)}
+              </button>
+            ))}
+            <span className="w-px h-5 bg-slate-800 shrink-0" aria-hidden="true" />
+          </>
+        )}
         <button onClick={() => setCertOnly((v) => !v)} className={smallChipClass(certOnly)} aria-pressed={certOnly}>
           {certOnly ? '✓ ' : ''}Certificate
         </button>
