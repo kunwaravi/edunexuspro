@@ -3,7 +3,7 @@
 > Generated: 2026-10-28
 
 ## Active Work
-- **Diwali 2026 coupon offer (2026-10-28, uncommitted, NOT deployed).**
+- **Diwali 2026 coupon offer — DEPLOYED 2026-10-28 (commit `11e34e6`).**
   - Backend: `Coupon` / `CouponRedemption` models, `Payment.couponCode` + `discountAmount`,
     `couponService.ts` (atomic claim/release/consume), `POST /api/payments/coupon/validate`,
     coupon-aware `createOrder` (still starts `INITIATED`).
@@ -16,20 +16,24 @@
   adds `location /static/` → `http://127.0.0.1:5000/static/`. Unrelated to the Diwali work.
 - Untracked: `MASTER-TASK-REPORT.html` (stabilization report, 2026-09-12).
 
-## Diwali Offer — Verification Done Locally (2026-10-28)
-- Service + HTTP flow: ₹2,000 → `DIWALI500` ₹1,500, `DIWALI250` ₹1,750; second global use → 400;
+## Diwali Offer — Verification (2026-10-28)
+- Local service + HTTP flow: ₹2,000 → `DIWALI500` ₹1,500, `DIWALI250` ₹1,750; second global use → 400;
   FAILED releases the coupon; proof → `PENDING`; no enrollment before verify; admin verify →
   `VERIFIED` + `Enrollment ACTIVE` + redemption `CONSUMED`.
-- Popup: 31/31 Playwright checks at 1440×900 and 390×844 (fits viewport, no overflow,
-  FAB no longer overlaps).
 - Local counts unchanged: users 5, courses 34, payments 3, enrollments 3, certificates 3.
-- **Production untouched**: `https://edunexus.kibm.in/api/courses` still returns ₹699 for all 9 courses.
+- **Production deployed 2026-10-28**: migration `20261028120000_add_diwali_coupons` applied;
+  `diwali:offer:apply` run (Payments 14 → 14, Enrollments 14 → 14).
+- Prod counts pre/post identical: users 65, courses 9, payments 14, enrollments 14, certificates 33.
+- Live `/api/courses` returns ₹2,000 for all 9 courses; live popup 18/18 Playwright checks at
+  1440×900 and 390×844; `/api/payments/coupon/validate` wired (401 without auth).
+- Coupons in prod: `DIWALI500` ₹500, `DIWALI250` ₹250, max 1 each, 0 used, valid 28 Oct – 15 Nov 2026.
+- **GBP offer NOT published** — owner must publish manually from `docs/diwali-gbp-offer.md`.
 
-## Deploy Checklist (when authorized)
-1. Commit code + migration + docs (exclude `nginx/edunexus.conf` unless intended).
-2. `npx prisma migrate deploy` on prod, then `npm run diwali:offer:apply` (dry-run first).
-3. Rebuild frontend + backend containers; verify coupon validate + create-order.
-4. GBP offer still needs manual publish by the business owner.
+## Deploy Checklist
+1. ✅ Commit code + migration + docs (nginx/edunexus.conf left uncommitted).
+2. ✅ Migration-on-start applied; `npm run diwali:offer:apply` run on prod.
+3. ✅ Frontend + backend containers rebuilt and healthy.
+4. ⬜ GBP offer manual publish by the business owner.
 
 ## Pending Work
 - Commit + deploy the `/static/` nginx fix. **Verified still broken in production**: `GET https://edunexus.kibm.in/static/course-banners/3d-cad.webp` returns `text/html` 200 (SPA fallback), not `image/webp`.
